@@ -31,18 +31,19 @@ export const MobileToolbar = ({
 
   const barStyle = {
     position: 'fixed',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    bottom: 10,
+    right: 10,
+    left: 'auto',
     zIndex: 1100,
     padding: '10px',
     display: 'flex',
+    flexDirection: 'column',
     gap: '10px',
-    alignItems: 'center',
-    justifyContent: 'space-around',
+    alignItems: 'flex-end',
     background: 'var(--color-bg-glass)',
     backdropFilter: 'blur(8px)',
-    borderTop: '1px solid var(--color-border)',
+    border: '1px solid var(--color-border)',
+    borderRadius: '12px'
   };
 
   const buttonStyle = {
@@ -57,7 +58,7 @@ export const MobileToolbar = ({
   return (
     <div style={barStyle}>
       {!isAudioReady ? (
-        <button className="glass-button-hero" onClick={startAudio} style={{ flex: 1 }}>🎧 Initialize</button>
+  <button className="glass-button-hero" onClick={startAudio} style={{ width: '100%' }}>🎧 Initialize</button>
       ) : (
         <>
           <button className="glass-button" onClick={toggleTheme} style={buttonStyle} aria-label="Toggle Theme">
@@ -126,7 +127,7 @@ export const MobileToolbar = ({
 
           {/* Overlays */}
           {activePopup === 'room' && (
-            <div style={{ position: 'fixed', bottom: 70, left: 10, right: 10, zIndex: 1200, padding: 12, borderRadius: 10, background: 'var(--color-bg-glass)', backdropFilter: 'blur(10px)', border: '1px solid var(--color-border)' }}>
+            <div style={{ position: 'fixed', bottom: 70, right: 10, left: 'auto', maxWidth: 360, zIndex: 1200, padding: 12, borderRadius: 10, background: 'var(--color-bg-glass)', backdropFilter: 'blur(10px)', border: '1px solid var(--color-border)' }}>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <input
                   value={roomInput}
@@ -141,7 +142,7 @@ export const MobileToolbar = ({
           )}
 
           {activePopup === 'glow' && (
-            <div style={{ position: 'fixed', bottom: 70, left: 10, right: 10, zIndex: 1200, padding: 12, borderRadius: 10, background: 'var(--color-bg-glass)', backdropFilter: 'blur(10px)', border: '1px solid var(--color-border)' }}>
+            <div style={{ position: 'fixed', bottom: 70, right: 10, left: 'auto', maxWidth: 360, zIndex: 1200, padding: 12, borderRadius: 10, background: 'var(--color-bg-glass)', backdropFilter: 'blur(10px)', border: '1px solid var(--color-border)' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <label className="label-text">Glow Intensity</label>
                 <input
@@ -158,7 +159,7 @@ export const MobileToolbar = ({
           )}
 
           {activePopup === 'chat' && (
-            <div style={{ position: 'fixed', bottom: 70, left: 10, right: 10, zIndex: 1200, padding: 12, borderRadius: 10, background: 'var(--color-bg-glass)', backdropFilter: 'blur(10px)', border: '1px solid var(--color-border)' }}>
+            <div style={{ position: 'fixed', bottom: 70, right: 10, left: 'auto', maxWidth: 360, zIndex: 1200, padding: 12, borderRadius: 10, background: 'var(--color-bg-glass)', backdropFilter: 'blur(10px)', border: '1px solid var(--color-border)' }}>
               <div className="custom-scrollbar" style={{ maxHeight: 150, overflowY: 'auto', marginBottom: 8 }}>
                 {(messages || []).slice(-20).map((m, idx) => (
                   <div key={idx} style={{ fontSize: '0.8rem', marginBottom: 4 }}>
