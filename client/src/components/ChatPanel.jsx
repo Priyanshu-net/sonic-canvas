@@ -7,7 +7,7 @@ export const ChatPanel = ({ messages = [], sendMessage = () => {}, mobile = fals
   const [listHeight, setListHeight] = useState(mobile ? 100 : 160);
 
   return (
-    <Panel title="💬 Room Chat" initialX={20} initialY={120} initialWidth={340} initialHeight={240} zIndex={32} mobile={mobile}>
+    <Panel title="💬 Room Chat" initialX={20} initialY={260} initialWidth={340} initialHeight={240} zIndex={34} mobile={mobile}>
       <div style={{ marginBottom: '0.5rem' }}>
         <div style={{ maxHeight: `${listHeight}px`, overflowY: 'auto', background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '0.5rem', padding: '0.5rem' }}>
           {(messages || []).slice(-20).map((m) => (

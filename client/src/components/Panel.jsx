@@ -27,8 +27,12 @@ export const Panel = ({
   const resizing = useRef(false);
   const last = useRef({ x: 0, y: 0 });
 
-  const onMouseDownDrag = (e) => {
+  const onMouseDownContainer = (e) => {
     if (mobile) return; // avoid accidental drags on mobile
+    // Skip drag for interactive elements
+    const tag = (e.target?.tagName || '').toLowerCase();
+    const interactive = ['input','textarea','select','button','a','label'];
+    if (interactive.includes(tag)) return;
     dragging.current = true;
     last.current = { x: e.clientX, y: e.clientY };
     e.preventDefault();
@@ -61,7 +65,7 @@ export const Panel = ({
     position: 'fixed',
     left: '1rem',
     right: '1rem',
-    bottom: '1rem',
+    top: `${pos.y}px`,
     width: 'auto',
     maxWidth: 'calc(100% - 2rem)',
     maxHeight: '50vh',
@@ -90,10 +94,9 @@ export const Panel = ({
   };
 
   return (
-    <div style={containerStyle} onMouseMove={onMouseMove} onMouseUp={onMouseUp}>
+    <div style={containerStyle} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseDown={onMouseDownContainer}>
       <div
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}
-        onMouseDown={onMouseDownDrag}
       >
         <div style={{ fontSize: mobile ? '0.85rem' : '0.9rem', fontWeight: 600, letterSpacing: '0.08em', cursor: mobile ? 'default' : 'move' }}>{title}</div>
         {!mobile && (
