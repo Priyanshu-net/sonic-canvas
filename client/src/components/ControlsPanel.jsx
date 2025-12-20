@@ -1,7 +1,7 @@
 import React from 'react';
 import { Panel } from './Panel';
 
-export const ControlsPanel = ({ theme, toggleTheme, currentPalette, setCurrentPalette, bloomIntensity, setBloomIntensity, reverbWet, setReverbWet, initialX, initialY }) => {
+export const ControlsPanel = ({ theme, toggleTheme, currentPalette, setCurrentPalette, bloomIntensity, setBloomIntensity, reverbWet, setReverbWet, contest, startContest, initialX, initialY }) => {
   return (
     <Panel title="System Controls" initialX={initialX} initialY={initialY}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -33,6 +33,20 @@ export const ControlsPanel = ({ theme, toggleTheme, currentPalette, setCurrentPa
           <span>{Number.isFinite(bloomIntensity) ? bloomIntensity.toFixed(1) : (2.0).toFixed(1)}</span>
         </div>
         <input type="range" min="0" max="4" step="0.1" value={Number.isFinite(bloomIntensity) ? bloomIntensity : 2.0} onChange={(e) => setBloomIntensity(parseFloat(e.target.value))} style={{ width: '100%' }} />
+      </div>
+
+      <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid var(--color-border)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+          <span className="label-text">SESSION MODES</span>
+          <button className="glass-button" onClick={() => startContest?.(30)}>Start Contest (30s)</button>
+        </div>
+        {contest?.active ? (
+          <div style={{ fontSize: '0.8rem' }}>🏁 Contest running • {contest.remaining}s left</div>
+        ) : contest?.winner ? (
+          <div style={{ fontSize: '0.8rem' }}>🏆 Winner: {contest.winner.name || 'Anon'}</div>
+        ) : (
+          <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>No active contest</div>
+        )}
       </div>
     </Panel>
   );

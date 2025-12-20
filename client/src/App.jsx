@@ -133,6 +133,7 @@ function App({ PhysicsSceneComponent = PhysicsSceneLazy }) {
             hapticsEnabled={hapticsEnabled} setHapticsEnabled={setHapticsEnabled}
             graphicsEnabled={graphicsEnabled} setGraphicsEnabled={setGraphicsEnabled}
             theme={theme} toggleTheme={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+            contest={contest} startContest={startContest}
             initialX={window.innerWidth - 330 - sideMargin} initialY={topAnchor}
           />
           <UsersPanel users={users} room={room} />
@@ -140,7 +141,7 @@ function App({ PhysicsSceneComponent = PhysicsSceneLazy }) {
       )}
 
       {!isAudioReady && (
-        <div style={{ position: 'absolute', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-bg)' }}>
+        <div style={{ position: 'absolute', inset: 0, zIndex: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-bg)' }}>
           <div style={{ textAlign: 'center' }}>
             <h1 style={{ fontSize: '3.5rem', fontWeight: 100, letterSpacing: '0.5em', marginBottom: '3rem' }}>SONIC CANVAS</h1>
             <button onClick={startAudio} className="glass-button-hero">INITIALIZE STUDIO</button>

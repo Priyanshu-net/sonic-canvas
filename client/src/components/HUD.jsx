@@ -1,10 +1,9 @@
 import React from 'react';
 
 export const HUD = ({ isAudioReady, isConnected, energyLevel, cps, combo, getComboMultiplier, userCount, contest }) => {
-  if (!isAudioReady) return null;
 
   return (
-    <div style={{ position: 'absolute', top: '25px', left: '25px', zIndex: 100, width: '260px' }} className="glass-panel">
+    <div style={{ position: 'absolute', top: '25px', left: '25px', zIndex: 1000, width: '260px' }} className="glass-panel">
       <div style={{ padding: '16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
           <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--color-text-muted)' }}>SESSION STATUS</span>
@@ -30,6 +29,13 @@ export const HUD = ({ isAudioReady, isConnected, energyLevel, cps, combo, getCom
               <div style={{fontSize:'0.8rem', fontWeight:'bold', color:'var(--color-warning)'}}>🏆 CONTEST: {contest.remaining}s</div>
               <div style={{fontSize:'0.7rem', opacity:0.8}}>{contest.message || 'Most beats wins!'}</div>
            </div>
+        )}
+
+        {!contest?.active && contest?.winner && (
+          <div style={{ marginTop: '12px', borderTop:'1px solid var(--color-border)', paddingTop:'8px' }}>
+            <div style={{fontSize:'0.8rem', fontWeight:'bold', color:'var(--color-success)'}}>🏁 Contest Ended</div>
+            <div style={{fontSize:'0.8rem'}}>{contest.message}</div>
+          </div>
         )}
       </div>
     </div>
