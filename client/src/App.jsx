@@ -163,6 +163,12 @@ function App({ PhysicsSceneComponent = PhysicsSceneLazy }) {
           startContest={startContest}
           userName={userName}
           setName={setName}
+          room={room}
+          joinRoom={joinRoom}
+          messages={messages}
+          sendMessage={sendMessage}
+          bloomIntensity={bloomIntensity}
+          setBloomIntensity={setBloomIntensity}
         />
       )}
 
