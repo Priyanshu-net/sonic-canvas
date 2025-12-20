@@ -10,6 +10,7 @@ import { UsersPanel } from './components/UsersPanel';
 import { ChatPanel } from './components/ChatPanel';
 import { RoomPanel } from './components/RoomPanel';
 import { Onboarding } from './components/Onboarding';
+import { MobileToolbar } from './components/MobileToolbar';
 
 const COLOR_PALETTES = {
   neon: ['#00FFFF', '#FF00FF', '#00FF00', '#FFD700', '#FF1493'],
@@ -34,7 +35,15 @@ function App({ PhysicsSceneComponent = PhysicsSceneLazy }) {
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(true);
 
-  const isMobile = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  // Robust mobile detection: coarse pointer OR mobile UA OR touch capability
+  const isMobile = (() => {
+    if (typeof window === 'undefined') return false;
+    const hasCoarsePointer = typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches;
+    const ua = navigator.userAgent || '';
+    const isMobileUA = /Mobi|Android|iPhone|iPad|iPod/i.test(ua);
+    const touchCapable = ('ontouchstart' in window) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
+    return hasCoarsePointer || isMobileUA || touchCapable;
+  })();
   const lastClickTime = useRef(Date.now());
 
   // Layout Anchors
@@ -138,6 +147,23 @@ function App({ PhysicsSceneComponent = PhysicsSceneLazy }) {
           />
           <UsersPanel users={users} room={room} />
         </>
+      )}
+
+      {isMobile && (
+        <MobileToolbar
+          isAudioReady={isAudioReady}
+          startAudio={startAudio}
+          theme={theme}
+          toggleTheme={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+          graphicsEnabled={graphicsEnabled}
+          setGraphicsEnabled={setGraphicsEnabled}
+          hapticsEnabled={hapticsEnabled}
+          setHapticsEnabled={setHapticsEnabled}
+          contest={contest}
+          startContest={startContest}
+          userName={userName}
+          setName={setName}
+        />
       )}
 
       {!isAudioReady && (
