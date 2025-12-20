@@ -127,7 +127,7 @@ export const MobileToolbar = ({
 
           {/* Overlays */}
           {activePopup === 'room' && (
-            <div style={{ position: 'fixed', bottom: 70, right: 10, left: 'auto', maxWidth: 360, zIndex: 1200, padding: 12, borderRadius: 10, background: 'var(--color-bg-glass)', backdropFilter: 'blur(10px)', border: '1px solid var(--color-border)' }}>
+            <div style={{ position: 'fixed', bottom: 70, left: 10, right: 10, zIndex: 1200, padding: 12, borderRadius: 10, background: 'var(--color-bg-glass)', backdropFilter: 'blur(10px)', border: '1px solid var(--color-border)' }}>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <input
                   value={roomInput}
@@ -142,7 +142,7 @@ export const MobileToolbar = ({
           )}
 
           {activePopup === 'glow' && (
-            <div style={{ position: 'fixed', bottom: 70, right: 10, left: 'auto', maxWidth: 360, zIndex: 1200, padding: 12, borderRadius: 10, background: 'var(--color-bg-glass)', backdropFilter: 'blur(10px)', border: '1px solid var(--color-border)' }}>
+            <div style={{ position: 'fixed', bottom: 70, left: 10, right: 10, zIndex: 1200, padding: 12, borderRadius: 10, background: 'var(--color-bg-glass)', backdropFilter: 'blur(10px)', border: '1px solid var(--color-border)' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <label className="label-text">Glow Intensity</label>
                 <input
@@ -159,7 +159,7 @@ export const MobileToolbar = ({
           )}
 
           {activePopup === 'chat' && (
-            <div style={{ position: 'fixed', bottom: 70, right: 10, left: 'auto', maxWidth: 360, zIndex: 1200, padding: 12, borderRadius: 10, background: 'var(--color-bg-glass)', backdropFilter: 'blur(10px)', border: '1px solid var(--color-border)' }}>
+            <div style={{ position: 'fixed', bottom: 70, left: 10, right: 10, zIndex: 1200, padding: 12, borderRadius: 10, background: 'var(--color-bg-glass)', backdropFilter: 'blur(10px)', border: '1px solid var(--color-border)' }}>
               <div className="custom-scrollbar" style={{ maxHeight: 150, overflowY: 'auto', marginBottom: 8 }}>
                 {(messages || []).slice(-20).map((m, idx) => (
                   <div key={idx} style={{ fontSize: '0.8rem', marginBottom: 4 }}>
