@@ -93,6 +93,25 @@ export function createSonicCanvasServer({ port = 3001, corsOrigin = 'http://loca
       broadcastRoomUsers(room);
     });
 
+    // Lightweight analytics: client can send UX events for future dashboards
+    // Example payload: { type: 'click', meta: { x, y, palette } }
+    socket.on('analytics', (event) => {
+      try {
+        const room = socketRoom.get(socket.id) || 'lobby';
+        const safe = {
+          type: String(event?.type || 'unknown'),
+          meta: event?.meta || {},
+          ts: Date.now(),
+          user: users.get(socket.id)?.name || `Anon-${socket.id.slice(0,4)}`,
+          room
+        };
+        // For now, just log. Later we can persist to a DB or dashboard.
+        console.log('📊 analytics', safe);
+      } catch (e) {
+        console.warn('analytics error', e);
+      }
+    });
+
     // Allow clients to request the current user count explicitly
     socket.on('get-user-count', () => {
       const room = socketRoom.get(socket.id) || 'lobby';

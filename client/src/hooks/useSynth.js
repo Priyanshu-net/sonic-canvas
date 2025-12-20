@@ -65,6 +65,9 @@ export const useSynth = () => {
   const reverbRef = useRef(null);
   const delayRef = useRef(null);
   const filterRef = useRef(null); // Low-pass filter
+  const pannerRef = useRef(null); // Stereo panner
+  const compressorRef = useRef(null); // Gentle glue
+  const limiterRef = useRef(null); // Prevent clipping
   const [isAudioReady, setIsAudioReady] = useState(false);
   const [currentPreset, setCurrentPreset] = useState('neon');
   const currentScaleRef = useRef(SCALES.pentatonic);
@@ -88,6 +91,15 @@ export const useSynth = () => {
     if (filterRef.current) {
       filterRef.current.dispose();
     }
+    if (pannerRef.current) {
+      pannerRef.current.dispose();
+    }
+    if (compressorRef.current) {
+      compressorRef.current.dispose();
+    }
+    if (limiterRef.current) {
+      limiterRef.current.dispose();
+    }
 
     // Create new synth with preset settings
     synthRef.current = new Tone.PolySynth(Tone.Synth, {
@@ -96,19 +108,30 @@ export const useSynth = () => {
     });
 
     // Create effects chain
-    reverbRef.current = new Tone.Reverb(preset.reverb).toDestination();
+    reverbRef.current = new Tone.Reverb(preset.reverb);
     
     filterRef.current = new Tone.Filter({
       type: 'lowpass',
       frequency: preset.filter.frequency,
       rolloff: -24,
       Q: 1
-    }).connect(reverbRef.current);
+    });
 
-    delayRef.current = new Tone.PingPongDelay(preset.delay).connect(filterRef.current);
+    delayRef.current = new Tone.PingPongDelay(preset.delay);
+    pannerRef.current = new Tone.Panner(0);
+    compressorRef.current = new Tone.Compressor({ threshold: -18, ratio: 3, attack: 0.02, release: 0.2 });
+    limiterRef.current = new Tone.Limiter(-1);
 
-    // Connect synth to effects chain
-    synthRef.current.connect(delayRef.current);
+    // Connect chain: synth -> panner -> delay -> filter -> reverb -> compressor -> limiter -> destination
+    synthRef.current.chain(
+      pannerRef.current,
+      delayRef.current,
+      filterRef.current,
+      reverbRef.current,
+      compressorRef.current,
+      limiterRef.current,
+      Tone.getDestination()
+    );
 
     // Update scale
     currentScaleRef.current = SCALES[preset.scale] || SCALES.pentatonic;
@@ -170,10 +193,14 @@ export const useSynth = () => {
   /**
    * Play a specific note name (e.g., 'C4') directly
    */
-  const playNoteName = useCallback((noteName) => {
+  const playNoteName = useCallback((noteName, opts = {}) => {
     if (!synthRef.current || !isAudioReady || !noteName) return;
-    synthRef.current.triggerAttackRelease(noteName, '8n');
-    console.log(`🎹 Playing (direct): ${noteName}`);
+    const { pan = 0, velocity = 0.8 } = opts;
+    if (pannerRef.current) {
+      try { pannerRef.current.pan.rampTo(Math.max(-1, Math.min(1, pan)), 0.02); } catch {}
+    }
+    synthRef.current.triggerAttackRelease(noteName, '8n', undefined, Math.max(0, Math.min(1, velocity)));
+    console.log(`🎹 Playing (direct): ${noteName} pan=${pan.toFixed?.(2) ?? pan} vel=${velocity}`);
   }, [isAudioReady]);
 
   /**
@@ -224,6 +251,15 @@ export const useSynth = () => {
     }
     if (filterRef.current) {
       filterRef.current.dispose();
+    }
+    if (pannerRef.current) {
+      pannerRef.current.dispose();
+    }
+    if (compressorRef.current) {
+      compressorRef.current.dispose();
+    }
+    if (limiterRef.current) {
+      limiterRef.current.dispose();
     }
   }, []);
 

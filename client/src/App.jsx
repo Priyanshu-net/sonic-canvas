@@ -1,10 +1,10 @@
 // File: App.jsx
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { useSynth } from './hooks/useSynth';
 import { useSocket } from './hooks/useSocket';
 import { useParticles } from './hooks/useParticles';
 import { useGameification } from './hooks/useGameification';
-import { PhysicsScene } from './components/PhysicsScene';
+const PhysicsSceneLazy = lazy(() => import('./components/PhysicsScene').then(m => ({ default: m.PhysicsScene })));
 import { HUD } from './components/HUD';
 import { ControlsPanel } from './components/ControlsPanel';
 import { UsersPanel } from './components/UsersPanel';
@@ -26,7 +26,8 @@ function App() {
   const [physicsBalls, setPhysicsBalls] = useState([]); // Physics balls for 3D scene
   const [userCount, setUserCount] = useState(0);
   const [currentPalette, setCurrentPalette] = useState('neon');
-  const [bloomIntensity, setBloomIntensity] = useState(2.0);
+  const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  const [bloomIntensity, setBloomIntensity] = useState(isTouchDevice ? 1.2 : 2.0);
   const [showAchievement, setShowAchievement] = useState(null);
   const lastClickTime = useRef(Date.now());
   const konamiCode = useRef([]);
@@ -69,33 +70,30 @@ function App() {
     if (!socket) return;
 
     const handleReceiveBeat = (payload) => {
-      console.log('🎵 Received beat:', payload);
-
-      // Calculate 3D position from normalized coordinates
-      const x3d = (payload.x - 0.5) * 10;
-      const z3d = (payload.y - 0.5) * 10;
-      const y3d = 5; // Spawn above the floor
-
-      // Add physics ball to scene (collision will trigger sound)
-      setPhysicsBalls(prev => [...prev, {
-        id: payload.id,
-        position: [x3d, y3d, z3d],
-        note: payload.note,
-        color: payload.color
-      }]);
-
-      // Cleanup: Remove ball reference after 12 seconds
-      setTimeout(() => {
-        setPhysicsBalls(prev => prev.filter(b => b.id !== payload.id));
-      }, 12000);
+      try {
+        console.log('🎵 Received beat:', payload);
+        // Calculate 3D position from normalized coordinates
+        const x3d = (payload.x - 0.5) * 10;
+        const z3d = (payload.y - 0.5) * 10;
+        const y3d = 5; // Spawn above the floor
+        // Add physics ball to scene (collision will trigger sound)
+        setPhysicsBalls(prev => [...prev, {
+          id: payload.id,
+          position: [x3d, y3d, z3d],
+          note: payload.note,
+          color: payload.color
+        }]);
+        // Cleanup: Remove ball reference after 12 seconds
+        setTimeout(() => {
+          setPhysicsBalls(prev => prev.filter(b => b.id !== payload.id));
+        }, 12000);
+      } catch (e) {
+        console.warn('receive-beat handler error', e);
+      }
     };
 
     socket.on('receive-beat', handleReceiveBeat);
-
-    // Cleanup listener on unmount
-    return () => {
-      socket.off('receive-beat', handleReceiveBeat);
-    };
+    return () => socket.off('receive-beat', handleReceiveBeat);
   }, [socket]);
 
   // Handle ball collision with floor
@@ -104,7 +102,10 @@ function App() {
 
     // Play the specific note assigned to this ball
     if (note) {
-      playNoteName(note);
+      // Map X position to stereo pan (-1 .. 1), use velocity for note intensity
+      const pan = Math.max(-1, Math.min(1, point[0] / 5));
+      const vel = Math.max(0.3, Math.min(1, (velocity ?? 1)));
+      playNoteName(note, { pan, velocity: vel });
     }
 
     // Create particle explosion at collision point
@@ -115,7 +116,34 @@ function App() {
     addExplosion(screenX, screenY, color, particleCount);
 
     console.log('💥 Ball collision:', { note, velocity: velocity.toFixed(2) });
+    // Stronger haptics on collision
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try { navigator.vibrate([5, 15, 5]); } catch {}
+    }
+    // Analytics
+    socket?.emit?.('analytics', { type: 'collision', meta: { note, velocity, color } });
   };
+  // Keyboard controls: map keys to notes via normalized Y positions
+  useEffect(() => {
+    const keyMap = {
+      a: 0.15, s: 0.30, d: 0.45, f: 0.60, g: 0.75, h: 0.90
+    };
+    const onKey = (ev) => {
+      const k = ev.key.toLowerCase();
+      if (!(k in keyMap) || !isAudioReady) return;
+      const y = keyMap[k];
+      const note = mapYToNote(y);
+      const color = NEON_COLORS[Math.floor(Math.random() * NEON_COLORS.length)];
+      // Play directly with center pan
+      playNoteName(note, { pan: 0, velocity: 0.85 });
+      // Also emit a synthetic beat so other clients see it
+      const beatId = `${socket.id}-${Date.now()}`;
+      socket?.emit?.('trigger-beat', { id: beatId, x: 0.5, y, color, note });
+      socket?.emit?.('analytics', { type: 'key', meta: { key: k, note } });
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isAudioReady, mapYToNote, NEON_COLORS, playNoteName, socket]);
 
   const handleCanvasClick = (e) => {
     if (!isAudioReady) {
@@ -162,6 +190,14 @@ function App() {
       note
     });
 
+    // Send lightweight analytics
+    socket.emit('analytics', { type: 'click', meta: { x, y, palette: currentPalette } });
+
+    // Mobile haptics feedback
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try { navigator.vibrate(10); } catch {}
+    }
+
     console.log('📤 Emitted trigger-beat:', { id: beatId, x, y, color, note });
 
     // Track click for 2D visual feedback
@@ -190,13 +226,15 @@ function App() {
     }}>
       {/* 3D Canvas Scene - Background Layer */}
       <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-        <PhysicsScene 
-          balls={physicsBalls} 
-          onBallCollision={handleBallCollision}
-          energyLevel={energyLevel}
-          cps={cps}
-          bloomIntensity={bloomIntensity}
-        />
+        <Suspense fallback={<div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',color:'#888'}}>Loading 3D scene…</div>}>
+          <PhysicsSceneLazy 
+            balls={physicsBalls} 
+            onBallCollision={handleBallCollision}
+            energyLevel={energyLevel}
+            cps={cps}
+            bloomIntensity={bloomIntensity}
+          />
+        </Suspense>
       </div>
 
       {/* Floating Header - SONIC CANVAS */}
