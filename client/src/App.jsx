@@ -8,6 +8,8 @@ const PhysicsSceneLazy = lazy(() => import('./components/PhysicsScene').then(m =
 import { HUD } from './components/HUD';
 import { ControlsPanel } from './components/ControlsPanel';
 import { UsersPanel } from './components/UsersPanel';
+import { ChatPanel } from './components/ChatPanel';
+import { RoomPanel } from './components/RoomPanel';
 import { Onboarding } from './components/Onboarding';
 
 // Enhanced color palettes
@@ -303,6 +305,23 @@ function App() {
       />
 
 
+      {/* Left-side Panels: Room & Chat (adjustable) */}
+      <RoomPanel
+        room={room}
+        joinRoom={joinRoom}
+        userName={userName}
+        setName={setName}
+        onInviteCopy={() => {
+          const url = new URL(window.location.href);
+          if (room) url.searchParams.set('room', room);
+          navigator.clipboard?.writeText(url.toString());
+          alert('Invite link copied!');
+        }}
+        onStartContest={(d) => startContest?.(d)}
+        mobile={isTouchDevice}
+      />
+      <ChatPanel messages={messages} sendMessage={sendMessage} mobile={isTouchDevice} />
+
       {/* Controls Panel */}
       <ControlsPanel 
         currentPalette={currentPalette}
@@ -321,14 +340,7 @@ function App() {
         graphicsEnabled={graphicsEnabled}
         setGraphicsEnabled={setGraphicsEnabled}
         onStartContest={(d) => startContest?.(d)}
-        messages={messages}
-        sendMessage={sendMessage}
-        onInviteCopy={() => {
-          const url = new URL(window.location.href);
-          if (room) url.searchParams.set('room', room);
-          navigator.clipboard?.writeText(url.toString());
-          alert('Invite link copied!');
-        }}
+        onInviteCopy={() => {}}
       />
 
       {/* Users Panel */}
