@@ -2,7 +2,23 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { io } from 'socket.io-client';
 
-const SERVER_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3001';
+// Resolve Socket server URL with sensible production fallback
+function resolveServerUrl() {
+  const fromEnv = import.meta.env.VITE_SOCKET_URL;
+  if (fromEnv && typeof fromEnv === 'string' && fromEnv.trim()) return fromEnv.trim();
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    // Heuristic: if deployed on Render and frontend host contains "frontend",
+    // try a sibling backend host by replacing the segment.
+    if (host.endsWith('onrender.com') && host.includes('frontend')) {
+      return `https://${host.replace('frontend', 'backend')}`;
+    }
+    // If running locally over https (rare), still default to localhost:3001
+  }
+  return 'http://localhost:3001';
+}
+
+const SERVER_URL = resolveServerUrl();
 
 /**
  * Custom hook for managing Socket.io connection
