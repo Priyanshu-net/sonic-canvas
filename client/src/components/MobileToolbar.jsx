@@ -23,11 +23,11 @@ export const MobileToolbar = ({
 }) => {
   const [nameEditing, setNameEditing] = useState(false);
   const [nameInput, setNameInput] = useState(userName || '');
-  const [roomEditing, setRoomEditing] = useState(false);
   const [roomInput, setRoomInput] = useState(room || '');
-  const [showChat, setShowChat] = useState(false);
   const [chatInput, setChatInput] = useState('');
-  const [showGlow, setShowGlow] = useState(false);
+  // Only one popup visible at a time: 'room' | 'chat' | 'glow' | null
+  const [activePopup, setActivePopup] = useState(null);
+  const togglePopup = (name) => setActivePopup((prev) => (prev === name ? null : name));
 
   const barStyle = {
     position: 'fixed',
@@ -71,7 +71,7 @@ export const MobileToolbar = ({
           </button>
             {/* Glow (Bloom) intensity control */}
             {typeof bloomIntensity === 'number' && typeof setBloomIntensity === 'function' && (
-              <button className="glass-button" onClick={() => setShowGlow(s => !s)} style={buttonStyle} aria-label="Glow">
+              <button className="glass-button" onClick={() => togglePopup('glow')} style={buttonStyle} aria-label="Glow">
                 <span>🌟</span>
                 <span>Glow</span>
               </button>
@@ -79,7 +79,7 @@ export const MobileToolbar = ({
 
             {/* Chat toggle */}
             {Array.isArray(messages) && typeof sendMessage === 'function' && (
-              <button className="glass-button" onClick={() => setShowChat(s => !s)} style={buttonStyle} aria-label="Chat">
+              <button className="glass-button" onClick={() => togglePopup('chat')} style={buttonStyle} aria-label="Chat">
                 <span>💬</span>
                 <span>Chat</span>
               </button>
@@ -87,7 +87,7 @@ export const MobileToolbar = ({
 
             {/* Room quick edit */}
             {typeof joinRoom === 'function' && (
-              <button className="glass-button" onClick={() => setRoomEditing(s => !s)} style={buttonStyle} aria-label="Room">
+              <button className="glass-button" onClick={() => togglePopup('room')} style={buttonStyle} aria-label="Room">
                 <span>🏟️</span>
                 <span>{room || 'Room'}</span>
               </button>
@@ -125,7 +125,7 @@ export const MobileToolbar = ({
           </div>
 
           {/* Overlays */}
-          {roomEditing && (
+          {activePopup === 'room' && (
             <div style={{ position: 'fixed', bottom: 70, left: 10, right: 10, zIndex: 1200, padding: 12, borderRadius: 10, background: 'var(--color-bg-glass)', backdropFilter: 'blur(10px)', border: '1px solid var(--color-border)' }}>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <input
@@ -135,12 +135,12 @@ export const MobileToolbar = ({
                   className="glass-input"
                   style={{ flex: 1 }}
                 />
-                <button className="glass-button" onClick={() => { joinRoom?.(roomInput); setRoomEditing(false); }}>Join</button>
+                <button className="glass-button" onClick={() => { joinRoom?.(roomInput); setActivePopup(null); }}>Join</button>
               </div>
             </div>
           )}
 
-          {showGlow && (
+          {activePopup === 'glow' && (
             <div style={{ position: 'fixed', bottom: 70, left: 10, right: 10, zIndex: 1200, padding: 12, borderRadius: 10, background: 'var(--color-bg-glass)', backdropFilter: 'blur(10px)', border: '1px solid var(--color-border)' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <label className="label-text">Glow Intensity</label>
@@ -157,7 +157,7 @@ export const MobileToolbar = ({
             </div>
           )}
 
-          {showChat && (
+          {activePopup === 'chat' && (
             <div style={{ position: 'fixed', bottom: 70, left: 10, right: 10, zIndex: 1200, padding: 12, borderRadius: 10, background: 'var(--color-bg-glass)', backdropFilter: 'blur(10px)', border: '1px solid var(--color-border)' }}>
               <div className="custom-scrollbar" style={{ maxHeight: 150, overflowY: 'auto', marginBottom: 8 }}>
                 {(messages || []).slice(-20).map((m, idx) => (
