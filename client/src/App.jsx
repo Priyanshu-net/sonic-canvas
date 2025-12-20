@@ -19,7 +19,7 @@ const COLOR_PALETTES = {
 };
 
 function App() {
-  const { playNote, playNoteName, startAudio, isAudioReady, mapYToNote, updateFilter, setSynthPreset } = useSynth();
+  const { playNote, playNoteName, startAudio, isAudioReady, mapYToNote, updateFilter, setSynthPreset, setReverbWet } = useSynth();
   const { socket, isConnected, room, joinRoom, users, userName, setName } = useSocket('lobby');
   const { particles, addExplosion } = useParticles();
   const { combo, score, cps, energyLevel, incrementCombo, resetCombo, getComboMultiplier, getEnergyState } = useGameification();
@@ -31,7 +31,7 @@ function App() {
   const [bloomIntensity, setBloomIntensity] = useState(isTouchDevice ? 1.2 : 2.0);
   const [showAchievement, setShowAchievement] = useState(null);
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
-  const [reverbWet, setReverbWet] = useState(0.4);
+  const [reverbWet, setReverbWetUI] = useState(0.4);
   const [showOnboarding, setShowOnboarding] = useState(() => {
     try {
       return localStorage.getItem('sc_onboarded') !== '1';
@@ -57,12 +57,10 @@ function App() {
     }
   }, [energyLevel, updateFilter, isAudioReady]);
 
-  // Apply reverb wet
+  // Apply reverb wet (safe before/after audio start)
   useEffect(() => {
-    if (isAudioReady && setReverbWetFn) {
-      setReverbWetFn(reverbWet);
-    }
-  }, [isAudioReady, reverbWet]);
+    setReverbWet(reverbWet);
+  }, [reverbWet, setReverbWet]);
 
   // Listen for user count updates
   useEffect(() => {
@@ -299,7 +297,7 @@ function App() {
         hapticsEnabled={hapticsEnabled}
         setHapticsEnabled={setHapticsEnabled}
         reverbWet={reverbWet}
-        setReverbWet={setReverbWet}
+  setReverbWet={setReverbWetUI}
         onInviteCopy={() => {
           const url = new URL(window.location.href);
           if (room) url.searchParams.set('room', room);

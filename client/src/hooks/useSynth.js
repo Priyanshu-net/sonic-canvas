@@ -72,7 +72,8 @@ export const useSynth = () => {
   const [isAudioReady, setIsAudioReady] = useState(false);
   const [currentPreset, setCurrentPreset] = useState('neon');
   const currentScaleRef = useRef(SCALES.pentatonic);
-  const [setReverbWetFn, setSetReverbWetFn] = useState(null);
+  // Store desired reverb wet value even before audio starts
+  const initialReverbWetRef = useRef(null);
 
   /**
    * Initialize or update synth with a specific preset
@@ -136,6 +137,11 @@ export const useSynth = () => {
       ToneModule.getDestination()
     );
 
+    // Apply any UI-requested reverb wet value softly
+    if (initialReverbWetRef.current != null) {
+      try { reverbRef.current.wet.rampTo(initialReverbWetRef.current, 0.1); } catch {}
+    }
+
     // Update scale
     currentScaleRef.current = SCALES[preset.scale] || SCALES.pentatonic;
 
@@ -156,13 +162,6 @@ export const useSynth = () => {
 
       // Initialize with default preset
       initializeSynth(currentPreset);
-
-      // expose reverb wet setter
-      setSetReverbWetFn(() => (wet) => {
-        if (reverbRef.current) {
-          try { reverbRef.current.wet.rampTo(wet, 0.1); } catch {}
-        }
-      });
 
       setIsAudioReady(true);
       console.log('✨ Synth initialized with atmospheric effects');
@@ -276,6 +275,16 @@ export const useSynth = () => {
     }
   }, []);
 
+  // Set reverb wet amount (0..1). Applies immediately if audio ready,
+  // otherwise stores and applies after first synth init.
+  const setReverbWet = useCallback((wet) => {
+    const clamped = Math.max(0, Math.min(1, wet));
+    initialReverbWetRef.current = clamped;
+    if (reverbRef.current) {
+      try { reverbRef.current.wet.rampTo(clamped, 0.1); } catch {}
+    }
+  }, []);
+
   return {
     playNote,
     playNoteName,
@@ -284,6 +293,7 @@ export const useSynth = () => {
     cleanup,
     mapYToNote, // Export for external use if needed
     updateFilter, // Export filter control
-    setSynthPreset // Export preset switcher
+    setSynthPreset, // Export preset switcher
+    setReverbWet // Export reverb wet control
   };
 };
