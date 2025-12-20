@@ -2,46 +2,31 @@ import { Canvas } from '@react-three/fiber';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { Beat } from './Beat';
 
-/**
- * CanvasScene - Full-screen React Three Fiber canvas with post-processing
- * @param {Object} props
- * @param {Array} props.beats - Array of beat objects { id, position: [x, y, z], note, color }
- */
-export const CanvasScene = ({ beats = [] }) => {
+export const CanvasScene = ({ beats = [], isDarkMode = true }) => {
   return (
     <Canvas
       camera={{ position: [0, 0, 5], fov: 75 }}
       style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        background: '#050505',
-        pointerEvents: 'none' // Let clicks pass through to the parent
+        position: 'absolute', inset: 0,
+        // Smooth transition between Dark (Void) and Light (Cloud)
+        background: isDarkMode ? '#050505' : '#e0e5ec',
+        transition: 'background 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)',
+        pointerEvents: 'none'
       }}
     >
-      {/* Ambient lighting for visibility */}
-      <ambientLight intensity={0.5} />
-      <pointLight position={[10, 10, 10]} intensity={1} />
-
-      {/* Render all active beats */}
+      {/* Lighting adapts to theme */}
+      <ambientLight intensity={isDarkMode ? 0.4 : 0.8} />
+      <pointLight position={[10, 10, 10]} intensity={isDarkMode ? 1.5 : 0.8} />
+      
       {beats.map((beat) => (
-        <Beat
-          key={beat.id}
-          position={beat.position}
-          color={beat.color}
-        />
+        <Beat key={beat.id} position={beat.position} color={beat.color} isDarkMode={isDarkMode} />
       ))}
 
-      {/* Post-processing effects */}
       <EffectComposer>
-        <Bloom
-          intensity={2.5}        // Intense glow
-          luminanceThreshold={0}  // Everything glows
-          luminanceSmoothing={0.9}
-          mipmapBlur
-          radius={0.8}           // Spread of bloom
+        <Bloom 
+          intensity={isDarkMode ? 2.0 : 0.6} // Lower bloom in light mode to prevent washout
+          luminanceThreshold={isDarkMode ? 0.1 : 0.6} 
+          mipmapBlur 
         />
       </EffectComposer>
     </Canvas>

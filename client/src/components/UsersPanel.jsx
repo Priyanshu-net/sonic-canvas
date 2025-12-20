@@ -1,65 +1,31 @@
-// File: UsersPanel.jsx
 import React from 'react';
-import { formatTimestamp } from '../utils/format';
 
-export const UsersPanel = ({ users = [], room = 'lobby', mobile = false }) => {
+export const UsersPanel = ({ users = [], room = 'lobby', isDarkMode, mobile }) => {
+  const theme = {
+    bg: isDarkMode ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.6)',
+    text: isDarkMode ? '#fff' : '#111'
+  };
+
   return (
-    <div style={mobile ? {
-      position: 'absolute',
-      top: '5rem',
-      right: '1rem',
-      width: '85vw',
-      maxHeight: '40vh',
-      overflowY: 'auto',
-      backdropFilter: 'blur(16px)',
-      background: 'rgba(255, 255, 255, 0.08)',
-      border: '1px solid rgba(255, 255, 255, 0.2)',
-      borderRadius: '0.75rem',
-      padding: '0.75rem',
-      zIndex: 13,
-      color: '#fff'
-  } : {
-      position: 'absolute',
-      bottom: '2rem',
-      right: '2rem',
-      width: '320px',
-      maxHeight: '40vh',
-      overflowY: 'auto',
-      backdropFilter: 'blur(16px)',
-      background: 'rgba(255, 255, 255, 0.08)',
-      border: '1px solid rgba(255, 255, 255, 0.2)',
-      borderRadius: '0.75rem',
-      padding: '1rem',
-      zIndex: 25,
-      color: '#fff'
+    <div style={{
+      position: 'absolute', bottom: mobile ? 'auto' : '2rem', top: mobile ? '6rem' : 'auto', 
+      right: mobile ? '1rem' : '2rem', width: '260px',
+      background: theme.bg, backdropFilter: 'blur(16px)', borderRadius: '12px',
+      padding: '1rem', border: '1px solid rgba(120,120,120,0.2)', color: theme.text,
+      zIndex: 25, maxHeight: '30vh', overflowY: 'auto'
     }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-        <div style={{ fontSize: '0.9rem', fontWeight: 600, letterSpacing: '0.08em' }}>Room Users</div>
-        <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>#{room}</div>
+      <div style={{ fontSize: '0.7rem', fontWeight: 800, opacity: 0.5, marginBottom: '10px', textTransform:'uppercase' }}>
+        Squad in #{room}
       </div>
-
-      {users.length === 0 ? (
-        <div style={{ fontSize: '0.85rem', opacity: 0.7 }}>No users yet. Share your room and jam!</div>
-      ) : (
-  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: mobile ? '0.8rem' : '0.85rem' }}>
-          <thead>
-            <tr style={{ textAlign: 'left', opacity: 0.7 }}>
-              <th style={{ padding: '0.25rem 0.25rem' }}>Name</th>
-              <th style={{ padding: '0.25rem 0.25rem' }}>Beats</th>
-              <th style={{ padding: '0.25rem 0.25rem' }}>Last</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map(u => (
-              <tr key={u.id}>
-                <td style={{ padding: '0.25rem 0.25rem' }}>{u.name || 'Anonymous'}</td>
-                <td style={{ padding: '0.25rem 0.25rem' }}>{u.beats ?? 0}</td>
-                <td style={{ padding: '0.25rem 0.25rem' }}>{formatTimestamp(u.lastAction)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        {users.length === 0 && <span style={{opacity:0.5, fontSize:'0.8rem'}}>Scanning...</span>}
+        {users.map(u => (
+          <div key={u.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+            <span style={{fontWeight:500}}>{u.name || 'Anonymous'}</span>
+            <span style={{ fontWeight: 700, color: '#00ffff' }}>{u.beats || 0}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

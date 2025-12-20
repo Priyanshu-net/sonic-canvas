@@ -2,18 +2,24 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 import { vi } from 'vitest';
 
-// Mock PhysicsScene to avoid WebGL and simulate collisions
-vi.mock('../components/PhysicsScene', () => ({
-  PhysicsScene: ({ onBallCollision }) =>
-    React.createElement('div', {
-      'data-testid': 'physics-scene',
-      onClick: () => onBallCollision([0, -5, 0], 'C4', '#fff', 1)
-    })
-}));
+// No need to mock PhysicsScene now; we'll click the app's overlay layer
 
-// Mock socket
+// Mock socket with accessible spy
+const mockSocket = { on: vi.fn(), off: vi.fn(), emit: vi.fn(), id: 'abc' };
 vi.mock('../hooks/useSocket', () => ({
-  useSocket: () => ({ socket: { on: vi.fn(), off: vi.fn(), emit: vi.fn(), id: 'abc' }, isConnected: true })
+  useSocket: () => ({
+    socket: mockSocket,
+    isConnected: true,
+    room: 'lobby',
+    users: [],
+    userName: '',
+    setName: vi.fn(),
+    joinRoom: vi.fn(),
+    contest: null,
+    startContest: vi.fn(),
+    messages: [],
+    sendMessage: vi.fn()
+  })
 }));
 
 // Mock particles
@@ -33,21 +39,34 @@ vi.mock('../hooks/useSynth', () => ({
     isAudioReady: true,
     mapYToNote: vi.fn().mockReturnValue('C4'),
     updateFilter,
+    setSynthPreset: vi.fn(),
     setReverbWet: vi.fn(),
   })
 }));
 
 import App from '../App.jsx';
 
-describe('App integration', () => {
-  it('plays note and emits particles on physics collision', async () => {
-    render(<App />);
+// Test helper component to simulate physics collisions
+const MockPhysicsScene = ({ onBallCollision }) =>
+  React.createElement('div', {
+    'data-testid': 'physics-scene',
+    onClick: () => onBallCollision([0, -5, 0], 'C4', '#fff', 1)
+  });
 
-    // Clicking the scene triggers mocked onBallCollision
+describe('App integration', () => {
+  it('plays note and emits particles when a physics collision occurs', async () => {
+    render(<App PhysicsSceneComponent={MockPhysicsScene} />);
+
+    // Ensure graphics are enabled (on touch-like envs it's off by default)
+    const graphicsToggle = await screen.findByRole('checkbox');
+    if (!graphicsToggle.checked) {
+      fireEvent.click(graphicsToggle);
+    }
+
     const scene = await screen.findByTestId('physics-scene');
     fireEvent.click(scene);
 
-  expect(playNoteName).toHaveBeenCalledWith('C4', expect.any(Object));
+    expect(playNoteName).toHaveBeenCalledWith('C4', expect.any(Object));
     expect(addExplosion).toHaveBeenCalled();
   });
 });

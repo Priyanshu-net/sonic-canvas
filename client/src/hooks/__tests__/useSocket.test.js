@@ -49,4 +49,38 @@ describe('useSocket', () => {
     // cleanup should call disconnect without throwing
     unmount();
   });
+
+  it('updates contest state and chat messages via socket events', () => {
+    const { result } = renderHook(() => useSocket('lobby'));
+
+    // simulate connect to trigger initial join
+    act(() => {
+      fake.handlers['connect'] && fake.handlers['connect']();
+    });
+
+    // contest start
+    act(() => {
+      fake.handlers['contest-start'] && fake.handlers['contest-start']({ duration: 30, endTime: Date.now() + 30000 });
+    });
+    expect(result.current.contest.active).toBe(true);
+
+    // contest update with peak champion
+    act(() => {
+      fake.handlers['contest-update'] && fake.handlers['contest-update']({ remaining: 10, leaderboard: [], peakChampion: { name: 'Peak', peakCps: 9 } });
+    });
+    expect(result.current.contest.peakMessage).toMatch(/Peak|Highest/i);
+
+    // contest end with winner
+    act(() => {
+      fake.handlers['contest-end'] && fake.handlers['contest-end']({ winner: { name: 'Alice', beats: 12, peakCps: 6 }, leaderboard: [], peakChampion: { name: 'Peak', peakCps: 9 } });
+    });
+    expect(result.current.contest.active).toBe(false);
+    expect(result.current.contest.message).toMatch(/Winner: Alice/i);
+
+    // chat messages append and cap size
+    act(() => {
+      fake.handlers['chat-message'] && fake.handlers['chat-message']({ text: 'hello' });
+    });
+    expect(result.current.messages.at(-1)?.text).toBe('hello');
+  });
 });

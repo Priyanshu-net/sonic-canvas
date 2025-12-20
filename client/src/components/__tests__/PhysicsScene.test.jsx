@@ -11,7 +11,7 @@ describe('PhysicsScene', () => {
     ];
 
     render(
-      <PhysicsScene balls={balls} energyLevel={8} cps={3} bloomIntensity={2.2} />
+      <PhysicsScene balls={balls} isDarkMode={true} />
     );
 
     expect(screen.getByTestId('canvas')).toBeInTheDocument();

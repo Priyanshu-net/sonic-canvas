@@ -14,9 +14,9 @@ vi.mock('tone', () => {
   class Reverb { constructor() { this.wet = { rampTo: vi.fn() }; } toDestination(){ return this; } dispose(){} }
   class PingPongDelay { constructor() { this.wet = 0; } connect(){ return this; } dispose(){} }
   class Filter { constructor(){ this.frequency = { rampTo: vi.fn() }; } connect(){ return this; } dispose(){} }
-  class Panner { constructor(){ this.pan = { rampTo: vi.fn() }; } }
-  class Compressor { constructor(){ return this; } }
-  class Limiter { constructor(){ return this; } }
+  class Panner { constructor(){ this.pan = { rampTo: vi.fn() }; } dispose(){} }
+  class Compressor { constructor(){ return this; } dispose(){} }
+  class Limiter { constructor(){ return this; } dispose(){} }
   const getDestination = () => ({})
   return {
     default: {},
@@ -65,5 +65,27 @@ describe('useSynth', () => {
   it('mapYToPentatonic clamps and maps correctly', () => {
     expect(mapYToPentatonic(-1)).toBeDefined();
     expect(mapYToPentatonic(2)).toBeDefined();
+  });
+
+  it('setSynthPreset can be called before and after audio start', async () => {
+    const { result } = renderHook(() => useSynth());
+
+    // Change preset before audio is ready
+    act(() => {
+      result.current.setSynthPreset('ocean');
+      result.current.setReverbWet(2); // will clamp and store for later
+    });
+
+    await act(async () => {
+      await result.current.startAudio();
+    });
+
+    // Change preset after audio is ready
+    act(() => {
+      result.current.setSynthPreset('sunset');
+      result.current.setReverbWet(0.3);
+      // Direct play should not throw
+      result.current.playNoteName('C4', { pan: 0.2, velocity: 0.9 });
+    });
   });
 });

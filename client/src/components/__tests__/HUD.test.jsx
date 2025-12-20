@@ -16,27 +16,13 @@ describe('HUD', () => {
       />
     );
 
-    expect(screen.getByText(/Audio: Active/i)).toBeInTheDocument();
-    expect(screen.getByText(/Connected/i)).toBeInTheDocument();
-    expect(screen.getByText(/Energy/i)).toBeInTheDocument();
-    expect(screen.getByText(/Combo/i)).toBeInTheDocument();
-    expect(screen.getByText(/5 users/i)).toBeInTheDocument();
+    expect(screen.getByText(/LIVE/i)).toBeInTheDocument();
+    expect(screen.getByText(/5 PILOTS/i)).toBeInTheDocument();
+    expect(screen.getByText(/ENERGY OUTPUT/i)).toBeInTheDocument();
   });
 
-  it('shows winner announcement briefly after contest ends', () => {
-    const recentEnd = Date.now();
-    const contest = {
-      active: false,
-      remaining: 0,
-      leaderboard: [
-        { id: '1', name: 'Alice', beats: 12, peakCps: 6 },
-        { id: '2', name: 'Bob', beats: 9, peakCps: 5 },
-        { id: '3', name: '', beats: 7, peakCps: 4 },
-      ],
-      winner: { id: '1', name: 'Alice', beats: 12, peakCps: 6 },
-      endedAt: recentEnd,
-      message: '🏆 Winner: Alice — 12 beats • peak 6 CPS 🎉'
-    };
+  it('shows active contest banner with remaining time', () => {
+    const contest = { active: true, remaining: 42 };
 
     render(
       <HUD
@@ -51,11 +37,25 @@ describe('HUD', () => {
       />
     );
 
-  // Two occurrences (title and message). Assert at least one exists
-  expect(screen.getAllByText(/Winner/i)[0]).toBeInTheDocument();
-  // Multiple Alice occurrences (message + row), assert at least one
-    expect(screen.getAllByText(/Alice/i)[0]).toBeInTheDocument();
-    // "12 beats" appears in message and leaderboard row; assert at least one
-    expect(screen.getAllByText(/12 beats/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/REMAINING/i)).toBeInTheDocument();
+    expect(screen.getByText(/42/)).toBeInTheDocument();
+  });
+
+  it('shows combo multiplier when combo is high and OFFLINE state', () => {
+    render(
+      <HUD
+        isAudioReady={true}
+        isConnected={false}
+        energyLevel={18}
+        cps={9}
+        combo={6}
+        getComboMultiplier={() => 'x6'}
+        userCount={0}
+      />
+    );
+
+    expect(screen.getByText(/OFFLINE/i)).toBeInTheDocument();
+    // Combo text shows "6x"
+    expect(screen.getByText(/6x/i)).toBeInTheDocument();
   });
 });
