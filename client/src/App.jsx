@@ -81,7 +81,8 @@ function App({ PhysicsSceneComponent = PhysicsSceneLazy }) {
   };
 
   const handleCanvasClick = (e) => {
-    if (!isAudioReady) return;
+    // Bootstrap audio on first user gesture; do not drop clicks
+    if (!isAudioReady) startAudio?.();
     if (e.target.closest('.glass-panel') || e.target.closest('button')) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
@@ -104,7 +105,7 @@ function App({ PhysicsSceneComponent = PhysicsSceneLazy }) {
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden' }}>
       <Suspense fallback={null}>
-        {isAudioReady && graphicsEnabled && (
+        {graphicsEnabled && (
           <PhysicsSceneComponent 
             balls={physicsBalls} onBallCollision={handleBallCollision} 
             energyLevel={energyLevel} cps={cps} theme={theme} bloomIntensity={bloomIntensity}
@@ -173,10 +174,10 @@ function App({ PhysicsSceneComponent = PhysicsSceneLazy }) {
       )}
 
       {!isAudioReady && (
-        <div style={{ position: 'absolute', inset: 0, zIndex: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-bg)' }}>
+        <div style={{ position: 'absolute', inset: 0, zIndex: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-bg)', pointerEvents: 'none' }}>
           <div style={{ textAlign: 'center' }}>
             <h1 style={{ fontSize: '3.5rem', fontWeight: 100, letterSpacing: '0.5em', marginBottom: '3rem' }}>SONIC CANVAS</h1>
-            <button onClick={startAudio} className="glass-button-hero">INITIALIZE STUDIO</button>
+            <button onClick={startAudio} className="glass-button-hero" style={{ pointerEvents: 'auto' }}>INITIALIZE STUDIO</button>
           </div>
         </div>
       )}
