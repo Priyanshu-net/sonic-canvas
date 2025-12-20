@@ -1,5 +1,5 @@
 // File: PhysicsScene.jsx
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Physics, usePlane, useSphere } from '@react-three/cannon';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { useRef, useState, useEffect } from 'react';
@@ -56,9 +56,9 @@ const PhysicsBall = ({
   return (
     <mesh ref={ref} castShadow receiveShadow>
       {isHighEnergy ? (
-        <icosahedronGeometry args={[0.3, 1]} />
+        <icosahedronGeometry args={[0.3, 0]} />
       ) : (
-        <sphereGeometry args={[0.3, 32, 32]} />
+        <sphereGeometry args={[0.3, 16, 16]} />
       )}
       <meshStandardMaterial
         color={color}
@@ -203,6 +203,23 @@ export const PhysicsScene = ({
   mobile = false
 }) => {
   const [impacts, setImpacts] = useState([]);
+  const { camera } = useThree();
+  const raycasterRef = useRef(new THREE.Raycaster());
+  const floorPlaneRef = useRef(new THREE.Plane(new THREE.Vector3(0, 1, 0), 5)); // y = -5 plane
+
+  // Convert normalized screen coords (0..1) to a point above the floor
+  const screenToFloorSpawn = (nx, ny) => {
+    const xNdc = nx * 2 - 1;
+    const yNdc = -(ny * 2 - 1);
+    const raycaster = raycasterRef.current;
+    raycaster.setFromCamera({ x: xNdc, y: yNdc }, camera);
+    const hit = raycaster.ray.intersectPlane(floorPlaneRef.current, new THREE.Vector3());
+    if (hit) {
+      return [hit.x, 3, hit.z]; // spawn slightly above floor to fall
+    }
+    // Fallback spawn in front of camera
+    return [0, 3, 0];
+  };
 
   const handleCollision = (point, note, color, velocity) => {
     // Create impact particle effect
@@ -223,6 +240,9 @@ export const PhysicsScene = ({
       setImpacts(prev => prev.filter(i => i.id !== impactId));
     }, 2000);
   };
+
+  // Limit balls for performance
+  const renderBalls = balls.slice(-40);
 
   return (
     <Canvas
@@ -247,20 +267,26 @@ export const PhysicsScene = ({
       
       {/* Physics World */}
       <Physics gravity={[0, -9.8, 0]}>
-  <PhysicsFloor />
-        
-        {/* Render all balls */}
-        {balls.map((ball) => (
-          <PhysicsBall
-            key={ball.id}
-            id={ball.id}
-            initialPosition={ball.position}
-            color={ball.color}
-            note={ball.note}
-            onCollide={handleCollision}
-            energyLevel={energyLevel}
-          />
-        ))}
+        <PhysicsFloor />
+
+        {/* Render balls with proper screen-to-world mapping */}
+        {renderBalls.map((ball) => {
+          const hasPos = Array.isArray(ball.position);
+          const nx = ball.nx ?? ball.x;
+          const ny = ball.ny ?? ball.y;
+          const pos = hasPos ? ball.position : screenToFloorSpawn(nx ?? 0.5, ny ?? 0.5);
+          return (
+            <PhysicsBall
+              key={ball.id}
+              id={ball.id}
+              initialPosition={pos}
+              color={ball.color}
+              note={ball.note}
+              onCollide={handleCollision}
+              energyLevel={energyLevel}
+            />
+          );
+        })}
       </Physics>
 
       {/* Impact particles */}

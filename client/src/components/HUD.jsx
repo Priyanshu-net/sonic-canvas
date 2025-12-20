@@ -1,22 +1,23 @@
 // File: HUD.jsx
 import React from 'react';
 
-export const HUD = ({ isAudioReady, isConnected, energyLevel, cps, combo, getComboMultiplier, userCount }) => {
+export const HUD = ({ isAudioReady, isConnected, energyLevel, cps, combo, getComboMultiplier, userCount, mobile = false }) => {
   return (
     <>
       {/* User Count Indicator - Bottom Right */}
       <div style={{
         position: 'absolute',
         bottom: '2rem',
-        right: '2rem',
+        right: mobile ? 'auto' : '2rem',
+        left: mobile ? '2rem' : 'auto',
         backdropFilter: 'blur(16px)',
         background: 'rgba(255, 255, 255, 0.1)',
         border: '1px solid rgba(255, 255, 255, 0.2)',
         borderRadius: '9999px',
-        padding: '0.75rem 1.5rem',
+        padding: mobile ? '0.5rem 1rem' : '0.75rem 1.5rem',
         zIndex: 10
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: mobile ? '0.8rem' : '0.875rem' }}>
           <span style={{ color: isConnected ? '#4ade80' : '#ef4444' }}>●</span>
           <span style={{ fontWeight: 500 }}>
             {userCount} {userCount === 1 ? 'user' : 'users'} jamming
@@ -34,17 +35,17 @@ export const HUD = ({ isAudioReady, isConnected, energyLevel, cps, combo, getCom
           background: 'rgba(255, 255, 255, 0.1)',
           border: '1px solid rgba(255, 255, 255, 0.2)',
           borderRadius: '0.5rem',
-          padding: '0.75rem 1rem',
+          padding: mobile ? '0.5rem 0.75rem' : '0.75rem 1rem',
           zIndex: 10,
           minWidth: '210px'
         }}>
-          <div style={{ fontSize: '0.875rem', fontWeight: 500 }}>🎵 Audio: Active</div>
-          <div style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.6)', marginTop: '0.25rem' }}>
+          <div style={{ fontSize: mobile ? '0.8rem' : '0.875rem', fontWeight: 500 }}>🎵 Audio: Active</div>
+          <div style={{ fontSize: mobile ? '0.7rem' : '0.75rem', color: 'rgba(255, 255, 255, 0.6)', marginTop: '0.25rem' }}>
             {isConnected ? '🟢 Connected' : '🔴 Connecting...'}
           </div>
           {/* Energy Bar */}
           <div style={{ marginTop: '0.5rem' }}>
-            <div style={{ fontSize: '0.75rem', marginBottom: '0.25rem' }}>⚡ Energy ({cps} CPS)</div>
+            <div style={{ fontSize: mobile ? '0.7rem' : '0.75rem', marginBottom: '0.25rem' }}>⚡ Energy ({cps} CPS)</div>
             <div style={{ height: '8px', background: 'rgba(255,255,255,0.15)', borderRadius: '4px', overflow: 'hidden' }}>
               <div style={{
                 width: `${Math.min(100, (energyLevel / 20) * 100)}%`,
@@ -55,7 +56,7 @@ export const HUD = ({ isAudioReady, isConnected, energyLevel, cps, combo, getCom
             </div>
           </div>
           {combo > 0 && (
-            <div style={{ fontSize: '0.75rem', color: '#ffd700', marginTop: '0.5rem', fontWeight: 600 }}>
+            <div style={{ fontSize: mobile ? '0.7rem' : '0.75rem', color: '#ffd700', marginTop: '0.5rem', fontWeight: 600 }}>
               🔥 Combo: {combo}x {getComboMultiplier()}
             </div>
           )}

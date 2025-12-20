@@ -2,9 +2,23 @@
 import React from 'react';
 import { formatTimestamp } from '../utils/format';
 
-export const UsersPanel = ({ users = [], room = 'lobby' }) => {
+export const UsersPanel = ({ users = [], room = 'lobby', mobile = false }) => {
   return (
-    <div style={{
+    <div style={mobile ? {
+      position: 'absolute',
+      top: '5rem',
+      right: '1rem',
+      width: '85vw',
+      maxHeight: '40vh',
+      overflowY: 'auto',
+      backdropFilter: 'blur(16px)',
+      background: 'rgba(255, 255, 255, 0.08)',
+      border: '1px solid rgba(255, 255, 255, 0.2)',
+      borderRadius: '0.75rem',
+      padding: '0.75rem',
+      zIndex: 13,
+      color: '#fff'
+    } : {
       position: 'absolute',
       bottom: '2rem',
       right: '2rem',
@@ -27,7 +41,7 @@ export const UsersPanel = ({ users = [], room = 'lobby' }) => {
       {users.length === 0 ? (
         <div style={{ fontSize: '0.85rem', opacity: 0.7 }}>No users yet. Share your room and jam!</div>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: mobile ? '0.8rem' : '0.85rem' }}>
           <thead>
             <tr style={{ textAlign: 'left', opacity: 0.7 }}>
               <th style={{ padding: '0.25rem 0.25rem' }}>Name</th>

@@ -1,24 +1,40 @@
 // File: ControlsPanel.jsx
 import React, { useState } from 'react';
 
-export const ControlsPanel = ({ currentPalette, setCurrentPalette, bloomIntensity, setBloomIntensity, room, joinRoom, userName = '', setName = () => {}, hapticsEnabled = true, setHapticsEnabled = () => {}, reverbWet = 0.4, setReverbWet = () => {}, onInviteCopy = () => {} }) => {
+export const ControlsPanel = ({ currentPalette, setCurrentPalette, bloomIntensity, setBloomIntensity, room, joinRoom, userName = '', setName = () => {}, hapticsEnabled = true, setHapticsEnabled = () => {}, reverbWet = 0.4, setReverbWet = () => {}, onInviteCopy = () => {}, mobile = false }) => {
   const [roomInput, setRoomInput] = useState(room || 'lobby');
   const [nameInput, setNameInput] = useState(userName || '');
+  const containerStyle = mobile ? {
+    position: 'fixed',
+    bottom: '1rem',
+    left: '1rem',
+    right: '1rem',
+    width: 'auto',
+    maxWidth: 'calc(100% - 2rem)',
+    backdropFilter: 'blur(16px)',
+    background: 'rgba(0, 0, 0, 0.35)',
+    border: '1px solid rgba(255, 255, 255, 0.25)',
+    borderRadius: '0.75rem',
+    padding: '0.75rem',
+    zIndex: 15,
+    color: '#fff'
+  } : {
+    position: 'absolute',
+    top: '2rem',
+    right: '2rem',
+    width: '260px',
+    backdropFilter: 'blur(16px)',
+    background: 'rgba(255, 255, 255, 0.08)',
+    border: '1px solid rgba(255, 255, 255, 0.2)',
+    borderRadius: '0.75rem',
+    padding: '1rem',
+    zIndex: 12,
+    color: '#fff'
+  };
+
   return (
-    <div style={{
-      position: 'absolute',
-      top: '2rem',
-      right: '2rem',
-      width: '260px',
-      backdropFilter: 'blur(16px)',
-      background: 'rgba(255, 255, 255, 0.08)',
-      border: '1px solid rgba(255, 255, 255, 0.2)',
-      borderRadius: '0.75rem',
-      padding: '1rem',
-      zIndex: 12,
-      color: '#fff'
-    }}>
-      <div style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.5rem', letterSpacing: '0.08em' }}>Controls</div>
+    <div style={containerStyle}>
+  <div style={{ fontSize: mobile ? '0.85rem' : '0.9rem', fontWeight: 600, marginBottom: '0.5rem', letterSpacing: '0.08em' }}>Controls</div>
 
       {/* Palette Selector */}
       <div style={{ marginBottom: '1rem' }}>
@@ -58,7 +74,7 @@ export const ControlsPanel = ({ currentPalette, setCurrentPalette, bloomIntensit
           onChange={(e) => setBloomIntensity(parseFloat(e.target.value))}
           style={{ width: '100%' }}
         />
-        <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>Intensity: {bloomIntensity.toFixed(1)}</div>
+        <div style={{ fontSize: mobile ? '0.7rem' : '0.75rem', opacity: 0.7 }}>Intensity: {bloomIntensity.toFixed(1)}</div>
       </div>
 
       {/* Audio Reverb */}
@@ -74,7 +90,7 @@ export const ControlsPanel = ({ currentPalette, setCurrentPalette, bloomIntensit
           onChange={(e) => setReverbWet(parseFloat(e.target.value))}
           style={{ width: '100%' }}
         />
-        <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>Wet: {reverbWet.toFixed(2)}</div>
+        <div style={{ fontSize: mobile ? '0.7rem' : '0.75rem', opacity: 0.7 }}>Wet: {reverbWet.toFixed(2)}</div>
       </div>
 
       {/* Haptics Toggle */}
@@ -162,7 +178,7 @@ export const ControlsPanel = ({ currentPalette, setCurrentPalette, bloomIntensit
             border: '1px solid rgba(255,255,255,0.25)',
             color: '#fff',
             borderRadius: '0.5rem',
-            padding: '0.5rem 0.75rem',
+            padding: mobile ? '0.5rem' : '0.5rem 0.75rem',
             cursor: 'pointer',
             flex: 1
           }}
@@ -170,7 +186,7 @@ export const ControlsPanel = ({ currentPalette, setCurrentPalette, bloomIntensit
       </div>
 
       {/* Help */}
-      <div style={{ fontSize: '0.75rem', opacity: 0.8, lineHeight: 1.4 }}>
+      <div style={{ fontSize: mobile ? '0.7rem' : '0.75rem', opacity: 0.8, lineHeight: 1.4 }}>
         Tip: Click anywhere to drop a marble. Notes play when it hits the glass. Faster clicks raise energy → more shake, brighter glow, and spikier shapes.
       </div>
     </div>

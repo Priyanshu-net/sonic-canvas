@@ -85,14 +85,11 @@ function App() {
     const handleReceiveBeat = (payload) => {
       try {
         console.log('🎵 Received beat:', payload);
-        // Calculate 3D position from normalized coordinates
-        const x3d = (payload.x - 0.5) * 10;
-        const z3d = (payload.y - 0.5) * 10;
-        const y3d = 5; // Spawn above the floor
-        // Add physics ball to scene (collision will trigger sound)
+        // Pass normalized coords; PhysicsScene will map to world via raycaster
         setPhysicsBalls(prev => [...prev, {
           id: payload.id,
-          position: [x3d, y3d, z3d],
+          nx: payload.x,
+          ny: payload.y,
           note: payload.note,
           color: payload.color
         }]);
@@ -187,7 +184,20 @@ function App() {
     const note = mapYToNote(y);
 
     // Random neon color
-    const color = NEON_COLORS[Math.floor(Math.random() * NEON_COLORS.length)];
+    const colorBase = NEON_COLORS[Math.floor(Math.random() * NEON_COLORS.length)];
+    const varyColor = (hex) => {
+      try {
+        const clean = hex.replace('#','');
+        const bigint = parseInt(clean.length===3?clean.split('').map(c=>c+c).join(''):clean,16);
+        let r=(bigint>>16)&255,g=(bigint>>8)&255,b=bigint&255;
+        const factor = (Math.random()-0.5)*0.3; // +/-30%
+        r=Math.max(0,Math.min(255, Math.round(r*(1+factor))));
+        g=Math.max(0,Math.min(255, Math.round(g*(1+factor))));
+        b=Math.max(0,Math.min(255, Math.round(b*(1+factor))));
+        return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+      } catch { return hex; }
+    };
+    const color = varyColor(colorBase);
 
   // No explosion on click — only on collision
 
@@ -218,6 +228,7 @@ function App() {
       x: e.clientX - rect.left, 
       y: e.clientY - rect.top, 
       note, 
+      color,
       id: beatId 
     }]);
 
@@ -281,6 +292,7 @@ function App() {
         combo={combo}
         getComboMultiplier={getComboMultiplier}
         userCount={userCount}
+        mobile={isTouchDevice}
       />
 
 
@@ -298,6 +310,7 @@ function App() {
         setHapticsEnabled={setHapticsEnabled}
         reverbWet={reverbWet}
   setReverbWet={setReverbWetUI}
+        mobile={isTouchDevice}
         onInviteCopy={() => {
           const url = new URL(window.location.href);
           if (room) url.searchParams.set('room', room);
@@ -307,7 +320,7 @@ function App() {
       />
 
       {/* Users Panel */}
-      <UsersPanel users={users} room={room} />
+  <UsersPanel users={users} room={room} mobile={isTouchDevice} />
 
       {/* Start Audio Screen */}
       {!isAudioReady && (
@@ -401,7 +414,15 @@ function App() {
                 width: '40px',
                 height: '40px',
                 borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(100, 200, 255, 0.8) 0%, transparent 70%)',
+                background: `radial-gradient(circle, ${(() => {
+                  // convert hex to rgba with alpha
+                  try {
+                    const c = click.color?.replace('#','') ?? '64c8ff';
+                    const bigint = parseInt(c.length===3?c.split('').map(x=>x+x).join(''):c,16);
+                    const r=(bigint>>16)&255,g=(bigint>>8)&255,b=bigint&255;
+                    return `rgba(${r}, ${g}, ${b}, 0.85)`;
+                  } catch { return 'rgba(100,200,255,0.85)'; }
+                })()} 0%, transparent 70%)`,
                 transform: 'translate(-50%, -50%)',
                 animation: 'pulse 1s ease-out forwards',
                 pointerEvents: 'none',
