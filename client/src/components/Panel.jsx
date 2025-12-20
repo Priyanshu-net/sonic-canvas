@@ -95,16 +95,17 @@ export const Panel = ({
 
   return (
     <div style={containerStyle} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseDown={onMouseDownContainer}>
-      <div
-        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}
-      >
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
         <div style={{ fontSize: mobile ? '0.85rem' : '0.9rem', fontWeight: 600, letterSpacing: '0.08em', cursor: mobile ? 'default' : 'move' }}>{title}</div>
         {!mobile && (
-          <div
-            onMouseDown={onMouseDownResize}
-            title="Resize"
-            style={{ width: 16, height: 16, borderBottom: '2px solid rgba(255,255,255,0.6)', borderRight: '2px solid rgba(255,255,255,0.6)', cursor: 'nwse-resize' }}
-          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>drag to move</span>
+            <div
+              onMouseDown={onMouseDownResize}
+              title="Resize"
+              style={{ width: 16, height: 16, borderBottom: '2px solid rgba(255,255,255,0.6)', borderRight: '2px solid rgba(255,255,255,0.6)', cursor: 'nwse-resize' }}
+            />
+          </div>
         )}
       </div>
       <div>

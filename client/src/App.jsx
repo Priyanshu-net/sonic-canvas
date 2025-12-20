@@ -35,6 +35,9 @@ function App() {
     // Default: disable graphics on touch devices to avoid initial hangs
     return !isTouchDevice;
   });
+  // Mobile popups for Room & Chat
+  const [showRoomPopup, setShowRoomPopup] = useState(false);
+  const [showChatPopup, setShowChatPopup] = useState(false);
   const [showAchievement, setShowAchievement] = useState(null);
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
   const [reverbWet, setReverbWetUI] = useState(isTouchDevice ? 0.3 : 0.4);
@@ -306,21 +309,52 @@ function App() {
 
 
       {/* Left-side Panels: Room & Chat (adjustable) */}
-      <RoomPanel
-        room={room}
-        joinRoom={joinRoom}
-        userName={userName}
-        setName={setName}
-        onInviteCopy={() => {
-          const url = new URL(window.location.href);
-          if (room) url.searchParams.set('room', room);
-          navigator.clipboard?.writeText(url.toString());
-          alert('Invite link copied!');
-        }}
-        onStartContest={(d) => startContest?.(d)}
-        mobile={isTouchDevice}
-      />
-      <ChatPanel messages={messages} sendMessage={sendMessage} mobile={isTouchDevice} />
+      {isTouchDevice ? (
+        <>
+          {/* Mobile: small buttons to open popups */}
+          <div style={{ position: 'absolute', top: '6rem', left: '2rem', zIndex: 16, display: 'flex', gap: '0.5rem' }}>
+            <button onClick={() => setShowRoomPopup((v) => !v)} style={{ padding: '0.4rem 0.6rem', borderRadius: '0.5rem', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.25)', color: '#fff' }}>Room</button>
+            <button onClick={() => setShowChatPopup((v) => !v)} style={{ padding: '0.4rem 0.6rem', borderRadius: '0.5rem', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.25)', color: '#fff' }}>Chat</button>
+          </div>
+          {showRoomPopup && (
+            <RoomPanel
+              room={room}
+              joinRoom={joinRoom}
+              userName={userName}
+              setName={setName}
+              onInviteCopy={() => {
+                const url = new URL(window.location.href);
+                if (room) url.searchParams.set('room', room);
+                navigator.clipboard?.writeText(url.toString());
+                alert('Invite link copied!');
+              }}
+              onStartContest={(d) => startContest?.(d)}
+              mobile={true}
+            />
+          )}
+          {showChatPopup && (
+            <ChatPanel messages={messages} sendMessage={sendMessage} mobile={true} />
+          )}
+        </>
+      ) : (
+        <>
+          <RoomPanel
+            room={room}
+            joinRoom={joinRoom}
+            userName={userName}
+            setName={setName}
+            onInviteCopy={() => {
+              const url = new URL(window.location.href);
+              if (room) url.searchParams.set('room', room);
+              navigator.clipboard?.writeText(url.toString());
+              alert('Invite link copied!');
+            }}
+            onStartContest={(d) => startContest?.(d)}
+            mobile={false}
+          />
+          <ChatPanel messages={messages} sendMessage={sendMessage} mobile={false} />
+        </>
+      )}
 
       {/* Controls Panel */}
       <ControlsPanel 
