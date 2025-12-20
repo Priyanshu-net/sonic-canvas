@@ -1,7 +1,7 @@
 // File: ControlsPanel.jsx
 import React, { useState } from 'react';
 
-export const ControlsPanel = ({ currentPalette, setCurrentPalette, bloomIntensity, setBloomIntensity, room, joinRoom, userName = '', setName = () => {} }) => {
+export const ControlsPanel = ({ currentPalette, setCurrentPalette, bloomIntensity, setBloomIntensity, room, joinRoom, userName = '', setName = () => {}, hapticsEnabled = true, setHapticsEnabled = () => {}, reverbWet = 0.4, setReverbWet = () => {}, onInviteCopy = () => {} }) => {
   const [roomInput, setRoomInput] = useState(room || 'lobby');
   const [nameInput, setNameInput] = useState(userName || '');
   return (
@@ -59,6 +59,34 @@ export const ControlsPanel = ({ currentPalette, setCurrentPalette, bloomIntensit
           style={{ width: '100%' }}
         />
         <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>Intensity: {bloomIntensity.toFixed(1)}</div>
+      </div>
+
+      {/* Audio Reverb */}
+      <div style={{ marginBottom: '1rem' }}>
+        <div style={{ fontSize: '0.75rem', opacity: 0.7, marginBottom: '0.25rem' }}>Reverb Wet</div>
+        <input
+          type="range"
+          min="0"
+          max="1"
+          step="0.05"
+          aria-label="Reverb Wet"
+          value={reverbWet}
+          onChange={(e) => setReverbWet(parseFloat(e.target.value))}
+          style={{ width: '100%' }}
+        />
+        <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>Wet: {reverbWet.toFixed(2)}</div>
+      </div>
+
+      {/* Haptics Toggle */}
+      <div style={{ marginBottom: '1rem' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <input
+            type="checkbox"
+            checked={hapticsEnabled}
+            onChange={(e) => setHapticsEnabled(e.target.checked)}
+          />
+          <span style={{ fontSize: '0.85rem' }}>Haptics (vibrate on mobile)</span>
+        </label>
       </div>
 
       {/* Rooms */}
@@ -122,6 +150,23 @@ export const ControlsPanel = ({ currentPalette, setCurrentPalette, bloomIntensit
             }}
           >Set</button>
         </div>
+      </div>
+
+      {/* Invite Link */}
+      <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <button
+          onClick={onInviteCopy}
+          title="Copy an invite link to this room"
+          style={{
+            background: 'rgba(255,255,255,0.12)',
+            border: '1px solid rgba(255,255,255,0.25)',
+            color: '#fff',
+            borderRadius: '0.5rem',
+            padding: '0.5rem 0.75rem',
+            cursor: 'pointer',
+            flex: 1
+          }}
+        >Copy Invite Link</button>
       </div>
 
       {/* Help */}

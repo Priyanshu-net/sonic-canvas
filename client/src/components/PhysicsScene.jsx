@@ -199,7 +199,8 @@ export const PhysicsScene = ({
   onBallCollision,
   energyLevel = 0,
   cps = 0,
-  bloomIntensity
+  bloomIntensity,
+  mobile = false
 }) => {
   const [impacts, setImpacts] = useState([]);
 
@@ -225,7 +226,7 @@ export const PhysicsScene = ({
 
   return (
     <Canvas
-      shadows
+      shadows={!mobile}
       camera={{ position: [0, 2, 10], fov: 75 }}
       style={{
         position: 'absolute',

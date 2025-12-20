@@ -8,6 +8,7 @@ const PhysicsSceneLazy = lazy(() => import('./components/PhysicsScene').then(m =
 import { HUD } from './components/HUD';
 import { ControlsPanel } from './components/ControlsPanel';
 import { UsersPanel } from './components/UsersPanel';
+import { Onboarding } from './components/Onboarding';
 
 // Enhanced color palettes
 const COLOR_PALETTES = {
@@ -29,6 +30,13 @@ function App() {
   const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
   const [bloomIntensity, setBloomIntensity] = useState(isTouchDevice ? 1.2 : 2.0);
   const [showAchievement, setShowAchievement] = useState(null);
+  const [hapticsEnabled, setHapticsEnabled] = useState(true);
+  const [reverbWet, setReverbWet] = useState(0.4);
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    try {
+      return localStorage.getItem('sc_onboarded') !== '1';
+    } catch { return true; }
+  });
   const lastClickTime = useRef(Date.now());
   const konamiCode = useRef([]);
   const konamiSequence = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
@@ -48,6 +56,13 @@ function App() {
       updateFilter(energyLevel);
     }
   }, [energyLevel, updateFilter, isAudioReady]);
+
+  // Apply reverb wet
+  useEffect(() => {
+    if (isAudioReady && setReverbWetFn) {
+      setReverbWetFn(reverbWet);
+    }
+  }, [isAudioReady, reverbWet]);
 
   // Listen for user count updates
   useEffect(() => {
@@ -117,7 +132,7 @@ function App() {
 
     console.log('💥 Ball collision:', { note, velocity: velocity.toFixed(2) });
     // Stronger haptics on collision
-    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+    if (hapticsEnabled && typeof navigator !== 'undefined' && 'vibrate' in navigator) {
       try { navigator.vibrate([5, 15, 5]); } catch {}
     }
     // Analytics
@@ -194,7 +209,7 @@ function App() {
     socket.emit('analytics', { type: 'click', meta: { x, y, palette: currentPalette } });
 
     // Mobile haptics feedback
-    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+    if (hapticsEnabled && typeof navigator !== 'undefined' && 'vibrate' in navigator) {
       try { navigator.vibrate(10); } catch {}
     }
 
@@ -233,6 +248,7 @@ function App() {
             energyLevel={energyLevel}
             cps={cps}
             bloomIntensity={bloomIntensity}
+            mobile={isTouchDevice}
           />
         </Suspense>
       </div>
@@ -280,6 +296,16 @@ function App() {
         joinRoom={joinRoom}
         userName={userName}
         setName={setName}
+        hapticsEnabled={hapticsEnabled}
+        setHapticsEnabled={setHapticsEnabled}
+        reverbWet={reverbWet}
+        setReverbWet={setReverbWet}
+        onInviteCopy={() => {
+          const url = new URL(window.location.href);
+          if (room) url.searchParams.set('room', room);
+          navigator.clipboard?.writeText(url.toString());
+          alert('Invite link copied!');
+        }}
       />
 
       {/* Users Panel */}
@@ -332,6 +358,14 @@ function App() {
             >
               🎹 Start Audio
             </button>
+            {showOnboarding && (
+              <div style={{ marginTop: '1rem' }}>
+                <button onClick={() => { try { localStorage.setItem('sc_onboarded','1'); } catch {}; setShowOnboarding(false); }}
+                  style={{ padding: '0.5rem 0.75rem', borderRadius: '0.5rem', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.25)', color: '#fff', cursor: 'pointer' }}>
+                  Show Tips
+                </button>
+              </div>
+            )}
             <p style={{
               color: 'rgba(255, 255, 255, 0.7)',
               fontSize: '0.875rem',
@@ -341,6 +375,10 @@ function App() {
             </p>
           </div>
         </div>
+      )}
+
+      {showOnboarding && (
+        <Onboarding onClose={() => { try { localStorage.setItem('sc_onboarded','1'); } catch {}; setShowOnboarding(false); }} />
       )}
 
       {/* Interactive Canvas Area */}

@@ -1,6 +1,7 @@
 // File: useSynth.js
 import { useRef, useState, useCallback } from 'react';
-import * as Tone from 'tone';
+// Lazy-loaded tone for faster initial paint
+let ToneModule = null;
 
 // Multiple musical scales for diversity
 const SCALES = {
@@ -71,11 +72,13 @@ export const useSynth = () => {
   const [isAudioReady, setIsAudioReady] = useState(false);
   const [currentPreset, setCurrentPreset] = useState('neon');
   const currentScaleRef = useRef(SCALES.pentatonic);
+  const [setReverbWetFn, setSetReverbWetFn] = useState(null);
 
   /**
    * Initialize or update synth with a specific preset
    */
   const initializeSynth = useCallback((presetName = 'neon') => {
+    if (!ToneModule) return;
     const preset = SYNTH_PRESETS[presetName] || SYNTH_PRESETS.neon;
     
     // Dispose old synth if exists
@@ -102,25 +105,25 @@ export const useSynth = () => {
     }
 
     // Create new synth with preset settings
-    synthRef.current = new Tone.PolySynth(Tone.Synth, {
+    synthRef.current = new ToneModule.PolySynth(ToneModule.Synth, {
       oscillator: preset.oscillator,
       envelope: preset.envelope
     });
 
     // Create effects chain
-    reverbRef.current = new Tone.Reverb(preset.reverb);
+  reverbRef.current = new ToneModule.Reverb(preset.reverb);
     
-    filterRef.current = new Tone.Filter({
+    filterRef.current = new ToneModule.Filter({
       type: 'lowpass',
       frequency: preset.filter.frequency,
       rolloff: -24,
       Q: 1
     });
 
-    delayRef.current = new Tone.PingPongDelay(preset.delay);
-    pannerRef.current = new Tone.Panner(0);
-    compressorRef.current = new Tone.Compressor({ threshold: -18, ratio: 3, attack: 0.02, release: 0.2 });
-    limiterRef.current = new Tone.Limiter(-1);
+  delayRef.current = new ToneModule.PingPongDelay(preset.delay);
+  pannerRef.current = new ToneModule.Panner(0);
+  compressorRef.current = new ToneModule.Compressor({ threshold: -18, ratio: 3, attack: 0.02, release: 0.2 });
+  limiterRef.current = new ToneModule.Limiter(-1);
 
     // Connect chain: synth -> panner -> delay -> filter -> reverb -> compressor -> limiter -> destination
     synthRef.current.chain(
@@ -130,7 +133,7 @@ export const useSynth = () => {
       reverbRef.current,
       compressorRef.current,
       limiterRef.current,
-      Tone.getDestination()
+      ToneModule.getDestination()
     );
 
     // Update scale
@@ -144,12 +147,22 @@ export const useSynth = () => {
    */
   const startAudio = useCallback(async () => {
     try {
-      // Start Tone.js audio context
-      await Tone.start();
+      // Lazy-load Tone
+      if (!ToneModule) {
+        ToneModule = await import('tone');
+      }
+      await ToneModule.start();
       console.log('🎵 Audio context started');
 
       // Initialize with default preset
       initializeSynth(currentPreset);
+
+      // expose reverb wet setter
+      setSetReverbWetFn(() => (wet) => {
+        if (reverbRef.current) {
+          try { reverbRef.current.wet.rampTo(wet, 0.1); } catch {}
+        }
+      });
 
       setIsAudioReady(true);
       console.log('✨ Synth initialized with atmospheric effects');
