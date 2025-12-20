@@ -29,6 +29,7 @@ function App() {
   const [currentPalette, setCurrentPalette] = useState('neon');
   const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
   const [bloomIntensity, setBloomIntensity] = useState(isTouchDevice ? 1.2 : 2.0);
+  const [graphicsEnabled, setGraphicsEnabled] = useState(true);
   const [showAchievement, setShowAchievement] = useState(null);
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
   const [reverbWet, setReverbWetUI] = useState(isTouchDevice ? 0.3 : 0.4);
@@ -249,7 +250,7 @@ function App() {
       fontFamily: 'Inter, sans-serif'
     }}>
       {/* 3D Canvas Scene - Background Layer (deferred until audio starts) */}
-      {(isAudioReady || import.meta.env.MODE === 'test') && (
+      {(graphicsEnabled && (isAudioReady || import.meta.env.MODE === 'test')) && (
         <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
           <Suspense fallback={<div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',color:'#888'}}>Loading 3D scene…</div>}>
             <PhysicsSceneLazy 
@@ -314,6 +315,8 @@ function App() {
         reverbWet={reverbWet}
   setReverbWet={setReverbWetUI}
         mobile={isTouchDevice}
+        graphicsEnabled={graphicsEnabled}
+        setGraphicsEnabled={setGraphicsEnabled}
         onStartContest={(d) => startContest?.(d)}
         messages={messages}
         sendMessage={sendMessage}

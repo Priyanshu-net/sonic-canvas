@@ -17,7 +17,7 @@ export const ControlsPanel = ({ currentPalette, setCurrentPalette, bloomIntensit
     border: '1px solid rgba(255, 255, 255, 0.25)',
     borderRadius: '0.75rem',
     padding: '0.75rem',
-    zIndex: 15,
+  zIndex: 40,
     color: '#fff'
   } : {
     position: 'absolute',
@@ -29,7 +29,7 @@ export const ControlsPanel = ({ currentPalette, setCurrentPalette, bloomIntensit
     border: '1px solid rgba(255, 255, 255, 0.2)',
     borderRadius: '0.75rem',
     padding: '1rem',
-    zIndex: 12,
+    zIndex: 30,
     color: '#fff'
   };
 
@@ -109,6 +109,23 @@ export const ControlsPanel = ({ currentPalette, setCurrentPalette, bloomIntensit
           <span style={{ fontSize: '0.85rem' }}>Haptics (vibrate on mobile)</span>
         </label>
       </div>
+
+      {/* Graphics Toggle (Perf) */}
+      {typeof window !== 'undefined' && (
+        <div style={{ marginBottom: '1rem' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <input
+              type="checkbox"
+              checked={!!(typeof graphicsEnabled !== 'undefined' ? graphicsEnabled : true)}
+              onChange={(e) => setGraphicsEnabled && setGraphicsEnabled(e.target.checked)}
+            />
+            <span style={{ fontSize: '0.85rem' }}>Graphics (3D) Enabled</span>
+          </label>
+          <div style={{ fontSize: mobile ? '0.7rem' : '0.75rem', opacity: 0.7, marginTop: '0.25rem' }}>
+            Turn off if your device hangs. Audio still works.
+          </div>
+        </div>
+      )}
 
       {/* Rooms */}
       <div style={{ marginBottom: '1rem' }}>
