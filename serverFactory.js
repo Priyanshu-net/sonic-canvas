@@ -38,7 +38,12 @@ export function createSonicCanvasServer({ port = 3001, corsOrigin = 'http://loca
       .map(([id, s]) => ({ id, name: users.get(id)?.name || `Anon-${id.slice(0,4)}`, beats: s.beats, peakCps: s.peakCps }))
       .sort((a, b) => b.beats - a.beats || b.peakCps - a.peakCps);
     const winner = reason === 'room-empty' ? null : (leaderboard[0] || null);
-    io.to(room).emit('contest-end', { room, winner, leaderboard, endedReason: reason });
+    // Peak CPS special mention (highest peakCps across entries)
+    const peakChampion = leaderboard.reduce((acc, p) => {
+      if (!acc || p.peakCps > acc.peakCps || (p.peakCps === acc.peakCps && p.beats > acc.beats)) return p;
+      return acc;
+    }, null);
+    io.to(room).emit('contest-end', { room, winner, leaderboard, endedReason: reason, peakChampion });
     contests.delete(room);
   };
 
@@ -106,6 +111,26 @@ export function createSonicCanvasServer({ port = 3001, corsOrigin = 'http://loca
       broadcastRoomUsers(room);
     });
 
+    // Room chat: broadcast messages within the current room
+    socket.on('chat-message', ({ text }) => {
+      try {
+        const room = socketRoom.get(socket.id) || 'lobby';
+        const info = users.get(socket.id) || { name: `Anon-${socket.id.slice(0,4)}` };
+        const now = Date.now();
+        // Simple rate limit: max 1 message per 800ms per user
+        const last = info.lastMessageTime || 0;
+        if (now - last < 800) return;
+        users.set(socket.id, { ...info, lastMessageTime: now });
+        const clean = String(text || '').trim().slice(0, 200);
+        if (!clean) return;
+        const payload = { id: `msg-${now}-${socket.id.slice(0,4)}`, room, from: info.name, text: clean, ts: now };
+        io.to(room).emit('chat-message', payload);
+        touchRoom(room);
+      } catch (e) {
+        console.warn('chat-message error', e);
+      }
+    });
+
     socket.on('trigger-beat', (payload) => {
       const room = socketRoom.get(socket.id) || 'lobby';
       const info = users.get(socket.id) || { name: `Anon-${socket.id.slice(0,4)}`, beats: 0, lastAction: 0 };
@@ -142,6 +167,17 @@ export function createSonicCanvasServer({ port = 3001, corsOrigin = 'http://loca
           leaderboard: Array.from(contest.scores.entries())
             .map(([id, s]) => ({ id, name: users.get(id)?.name || `Anon-${id.slice(0,4)}`, beats: s.beats, peakCps: s.peakCps }))
             .sort((a, b) => b.beats - a.beats || b.peakCps - a.peakCps)
+          ,
+          // current peak champion
+          peakChampion: (() => {
+            let champ = null;
+            for (const [id, s] of contest.scores.entries()) {
+              const name = users.get(id)?.name || `Anon-${id.slice(0,4)}`;
+              const entry = { id, name, beats: s.beats, peakCps: s.peakCps };
+              if (!champ || entry.peakCps > champ.peakCps || (entry.peakCps === champ.peakCps && entry.beats > champ.beats)) champ = entry;
+            }
+            return champ;
+          })()
         });
       }
     });

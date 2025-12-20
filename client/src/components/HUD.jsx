@@ -83,7 +83,10 @@ export const HUD = ({ isAudioReady, isConnected, energyLevel, cps, combo, getCom
             <div style={{ fontSize: mobile ? '0.8rem' : '0.875rem', fontWeight: 600 }}>🎮 Contest</div>
             <div style={{ fontSize: mobile ? '0.8rem' : '0.875rem' }}>⏱ {contest.remaining}s</div>
           </div>
-          <div style={{ fontSize: mobile ? '0.7rem' : '0.75rem', opacity: 0.85, marginTop: '0.25rem' }}>🔥 Tap fast! Highest CPS wins</div>
+          <div style={{ fontSize: mobile ? '0.7rem' : '0.75rem', opacity: 0.85, marginTop: '0.25rem' }}>{contest.message || '🔥 More balls win • Peak CPS gets a shoutout'}</div>
+          {contest.peakMessage && (
+            <div style={{ fontSize: mobile ? '0.7rem' : '0.75rem', opacity: 0.9, marginTop: '0.25rem' }}>{contest.peakMessage}</div>
+          )}
           <div style={{ marginTop: '0.5rem' }}>
             {(contest.leaderboard || []).slice(0, 3).map((p, idx) => (
               <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: mobile ? '0.75rem' : '0.8rem' }}>
@@ -115,6 +118,9 @@ export const HUD = ({ isAudioReady, isConnected, energyLevel, cps, combo, getCom
         }}>
           <div style={{ fontSize: mobile ? '0.95rem' : '1.1rem', fontWeight: 700, letterSpacing: '0.03em' }}>🏆 Winner</div>
           <div style={{ fontSize: mobile ? '0.9rem' : '1rem', marginTop: '0.25rem' }}>🎉 {contest.message}</div>
+          {contest.peakMessage && (
+            <div style={{ fontSize: mobile ? '0.85rem' : '0.95rem', marginTop: '0.25rem' }}>{contest.peakMessage}</div>
+          )}
           <div style={{ marginTop: '0.5rem' }}>
             {(contest.leaderboard || []).slice(0, 3).map((p, idx) => (
               <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: mobile ? '0.75rem' : '0.8rem' }}>
