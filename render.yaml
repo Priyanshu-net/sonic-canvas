@@ -1,0 +1,27 @@
+services:
+  # Backend WebSocket Server
+  - type: web
+    name: sonic-canvas-backend
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        generateValue: true
+      - key: CORS_ORIGINS
+        sync: false # You'll set this manually to your frontend URL
+    healthCheckPath: /
+
+  # Frontend (Static Site)
+  - type: web
+    name: sonic-canvas-frontend
+    runtime: static
+    buildCommand: cd client && npm install && npm run build
+    staticPublishPath: ./client/dist
+    envVars:
+      - key: VITE_SOCKET_URL
+        sync: false # Set this to your backend URL after deploying backend
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

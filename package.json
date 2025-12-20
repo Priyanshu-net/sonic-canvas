@@ -1,0 +1,30 @@
+{
+  "name": "sonic-canvas-backend",
+  "version": "1.0.0",
+  "description": "Real-time multiplayer audio-visual experience backend",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test tests/**/*.mjs",
+    "build": "cd client && npm install && npm run build",
+    "preview": "npm run build && cd client && npm run preview"
+  },
+  "keywords": [
+    "websocket",
+    "audio",
+    "visual",
+    "multiplayer"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.8.1"
+  }
+}
