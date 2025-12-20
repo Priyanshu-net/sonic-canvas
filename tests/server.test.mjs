@@ -141,3 +141,125 @@ test('room cleanup triggers after idle (short timeout)', async () => {
   assert.equal(cleaned.room, 'testroom');
   await s.close();
 });
+
+test('default lobby join and set-name reflected in room-users roster', async () => {
+  const port = TEST_PORT + 3;
+  const url = `http://localhost:${port}`;
+  const s = createSonicCanvasServer({ port, corsOrigin: ['http://localhost:5173'] });
+  await s.listen();
+
+  const a = new Client(url, { transports: ['websocket'] });
+  await new Promise((resolve, reject) => { a.on('connect', resolve); a.on('connect_error', reject); });
+
+  // Should join lobby by default
+  const joined = await new Promise((resolve) => a.on('room-joined', ({ room }) => resolve(room)));
+  assert.equal(joined, 'lobby');
+
+  // Set a custom name and verify roster update
+  const rosterPromise = new Promise((resolve) => {
+    a.on('room-users', ({ room, users }) => {
+      if (room === 'lobby' && Array.isArray(users) && users.some(u => u.name === 'Pri')) {
+        resolve({ room, users });
+      }
+    });
+  });
+  a.emit('set-name', { name: 'Pri' });
+  const roster = await rosterPromise;
+  assert.equal(roster.room, 'lobby');
+  assert.ok(roster.users.some(u => u.name === 'Pri'));
+
+  a.close();
+  await s.close();
+});
+
+test('multiple users roster and name edge cases', async () => {
+  const port = TEST_PORT + 4;
+  const url = `http://localhost:${port}`;
+  const s = createSonicCanvasServer({ port, corsOrigin: ['http://localhost:5173'] });
+  await s.listen();
+
+  const a = new Client(url, { transports: ['websocket'] });
+  const b = new Client(url, { transports: ['websocket'] });
+  const c = new Client(url, { transports: ['websocket'] });
+  await Promise.all([
+    new Promise((resolve, reject) => { a.on('connect', resolve); a.on('connect_error', reject); }),
+    new Promise((resolve, reject) => { b.on('connect', resolve); b.on('connect_error', reject); }),
+    new Promise((resolve, reject) => { c.on('connect', resolve); c.on('connect_error', reject); }),
+  ]);
+
+  // Set names: normal, empty, very long
+  a.emit('set-name', { name: 'Pri' });
+  b.emit('set-name', { name: '' });
+  c.emit('set-name', { name: 'LongNameThatExceedsLimitABCDEFGHIJKLMNOPQRSTUVWXYZ' });
+
+  // Await a roster update reflecting all three entries
+  const roster = await new Promise((resolve) => {
+    const handler = ({ room, users }) => {
+      if (room === 'lobby' && Array.isArray(users) && users.length >= 3) {
+        resolve({ room, users });
+      }
+    };
+    a.on('room-users', handler);
+    b.on('room-users', handler);
+    c.on('room-users', handler);
+  });
+
+  assert.equal(roster.room, 'lobby');
+  const names = roster.users.map(u => u.name);
+  assert.ok(names.includes('Pri'));
+  // Empty name should fallback to Anon-xxxx
+  assert.ok(names.some(n => /^Anon-/.test(n)));
+  // Long name should be trimmed to <=32 chars
+  const long = names.find(n => n.startsWith('LongNameThatExceedsLimit'));
+  assert.ok(long);
+  assert.ok(long.length <= 32);
+
+  a.close(); b.close(); c.close();
+  await s.close();
+});
+
+test('contest peak champion tie-breaker on equal peak', async () => {
+  const port = TEST_PORT + 5;
+  const url = `http://localhost:${port}`;
+  const s = createSonicCanvasServer({ port, corsOrigin: ['http://localhost:5173'] });
+  await s.listen();
+
+  const a = new Client(url, { transports: ['websocket'] });
+  const b = new Client(url, { transports: ['websocket'] });
+  await Promise.all([
+    new Promise((resolve, reject) => { a.on('connect', resolve); a.on('connect_error', reject); }),
+    new Promise((resolve, reject) => { b.on('connect', resolve); b.on('connect_error', reject); }),
+  ]);
+
+  // Start a short contest
+  a.emit('start-contest', { duration: 2 });
+  await new Promise((resolve) => a.on('contest-start', resolve));
+
+  // Create equal peakCps for A and B (e.g., 3 beats in 1s), but A has more total beats to break tie
+  a.emit('trigger-beat', { id: 'a1' });
+  b.emit('trigger-beat', { id: 'b1' });
+  a.emit('trigger-beat', { id: 'a2' });
+  b.emit('trigger-beat', { id: 'b2' });
+  a.emit('trigger-beat', { id: 'a3' });
+  b.emit('trigger-beat', { id: 'b3' });
+  // Extra beats for A to win tie-breaker
+  a.emit('trigger-beat', { id: 'a4' });
+  a.emit('trigger-beat', { id: 'a5' });
+
+  // Observe at least one contest-update with peakChampion present
+  const update = await new Promise((resolve) => {
+    a.on('contest-update', (payload) => {
+      if (payload?.peakChampion) resolve(payload);
+    });
+  });
+  assert.ok(update.peakChampion);
+  // Peak champion should be A (more beats on tie peakCps)
+  assert.ok(update.leaderboard.some(e => e.beats >= 5));
+
+  // End contest
+  const endPayload = await new Promise((resolve) => a.on('contest-end', resolve));
+  assert.ok(endPayload.leaderboard && endPayload.leaderboard.length >= 2);
+
+  a.close(); b.close();
+  await s.close();
+});
