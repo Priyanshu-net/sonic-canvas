@@ -9,7 +9,10 @@ export const RoomPanel = ({
   setName = () => {},
   onInviteCopy = () => {},
   onStartContest = () => {},
-  mobile = false
+  mobile = false,
+  initialX = 20,
+  initialY = 20,
+  zIndex = 9
 }) => {
   const [roomInput, setRoomInput] = useState(room || 'lobby');
   const [nameInput, setNameInput] = useState(userName || '');
@@ -18,7 +21,7 @@ export const RoomPanel = ({
   useEffect(() => setNameInput(userName || ''), [userName]);
 
   return (
-    <Panel title="🏷️ Room & Profile" initialX={20} initialY={20} initialWidth={340} initialHeight={220} zIndex={35} mobile={mobile}>
+    <Panel title="🏷️ Room & Profile" initialX={initialX} initialY={initialY} initialWidth={340} initialHeight={220} zIndex={zIndex} mobile={mobile}>
       {/* Room */}
       <div style={{ marginBottom: '0.75rem' }}>
         <div style={{ fontSize: '0.8rem', opacity: 0.7, marginBottom: '0.25rem' }}>Room</div>

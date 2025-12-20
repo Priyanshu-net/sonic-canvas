@@ -38,6 +38,8 @@ function App() {
   // Mobile popups for Room & Chat
   const [showRoomPopup, setShowRoomPopup] = useState(false);
   const [showChatPopup, setShowChatPopup] = useState(false);
+  // Position panels below HUD (top-left HUD at ~2rem)
+  const baseLeftPanelY = isAudioReady ? 140 : 20;
   const [showAchievement, setShowAchievement] = useState(null);
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
   const [reverbWet, setReverbWetUI] = useState(isTouchDevice ? 0.3 : 0.4);
@@ -330,10 +332,13 @@ function App() {
               }}
               onStartContest={(d) => startContest?.(d)}
               mobile={true}
+              initialX={20}
+              initialY={baseLeftPanelY}
+              zIndex={9}
             />
           )}
           {showChatPopup && (
-            <ChatPanel messages={messages} sendMessage={sendMessage} mobile={true} />
+            <ChatPanel messages={messages} sendMessage={sendMessage} mobile={true} initialX={20} initialY={baseLeftPanelY + 240} zIndex={9} />
           )}
         </>
       ) : (
@@ -351,8 +356,11 @@ function App() {
             }}
             onStartContest={(d) => startContest?.(d)}
             mobile={false}
+            initialX={20}
+            initialY={baseLeftPanelY}
+            zIndex={9}
           />
-          <ChatPanel messages={messages} sendMessage={sendMessage} mobile={false} />
+          <ChatPanel messages={messages} sendMessage={sendMessage} mobile={false} initialX={20} initialY={baseLeftPanelY + 240} zIndex={9} />
         </>
       )}
 
