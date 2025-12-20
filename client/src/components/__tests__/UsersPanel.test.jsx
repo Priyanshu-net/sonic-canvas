@@ -5,7 +5,11 @@ import { UsersPanel } from '../../components/UsersPanel';
 describe('UsersPanel', () => {
   it('renders empty state when no users', () => {
     render(<UsersPanel users={[]} room="lobby" />);
-    expect(screen.getByText(/Scanning.../i)).toBeInTheDocument();
+    // Header and room tag should render even without users
+    expect(screen.getByText(/JAMMERS ONLINE/i)).toBeInTheDocument();
+    expect(screen.getByText(/#lobby/i)).toBeInTheDocument();
+    // No user rows are rendered
+    expect(screen.queryByText(/Anonymous/i)).not.toBeInTheDocument();
   });
 
   it('renders a table of users', () => {

@@ -17,8 +17,9 @@ describe('HUD', () => {
     );
 
     expect(screen.getByText(/LIVE/i)).toBeInTheDocument();
-    expect(screen.getByText(/5 PILOTS/i)).toBeInTheDocument();
-    expect(screen.getByText(/ENERGY OUTPUT/i)).toBeInTheDocument();
+    expect(screen.getByText(/SESSION STATUS/i)).toBeInTheDocument();
+    expect(screen.getByText(/Energy/i)).toBeInTheDocument();
+    expect(screen.getByText(/CPS/i)).toBeInTheDocument();
   });
 
   it('shows active contest banner with remaining time', () => {
@@ -37,7 +38,7 @@ describe('HUD', () => {
       />
     );
 
-    expect(screen.getByText(/REMAINING/i)).toBeInTheDocument();
+    expect(screen.getByText(/CONTEST/i)).toBeInTheDocument();
     expect(screen.getByText(/42/)).toBeInTheDocument();
   });
 

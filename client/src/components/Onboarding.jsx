@@ -1,36 +1,36 @@
 import React from 'react';
 
-export const Onboarding = ({ onClose, isDarkMode = true }) => {
+export const Onboarding = ({ onClose }) => {
   return (
-    <div style={{
-      position: 'absolute', inset: 0, zIndex: 100,
-      background: isDarkMode ? 'rgba(5,5,5,0.85)' : 'rgba(240,240,240,0.85)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(12px)'
-    }}>
-      <div style={{
-        width: 'min(480px, 90vw)', textAlign: 'center', padding: '3rem',
-        background: isDarkMode ? '#111' : '#fff',
-        border: `1px solid ${isDarkMode ? '#333' : '#eee'}`,
-        borderRadius: '24px', color: isDarkMode ? '#fff' : '#111',
-        boxShadow: '0 20px 50px rgba(0,0,0,0.3)'
-      }}>
-        <h1 style={{ fontSize: '2rem', margin: '0 0 1rem 0', fontWeight: 800, letterSpacing: '-0.02em' }}>SONIC CANVAS</h1>
-        <p style={{ opacity: 0.7, lineHeight: 1.6, marginBottom: '2.5rem', fontSize: '1rem' }}>
-          A multiplayer audiovisual instrument. <br/>
-          Click to play. Collisions create notes. <br/>
-          Sync with the world.
-        </p>
-        <button onClick={onClose} style={{
-          background: 'linear-gradient(135deg, #00C6FF, #0072FF)', 
-          color: 'white', border: 'none', padding: '1rem 3rem',
-          borderRadius: '50px', fontSize: '1.1rem', fontWeight: 700, cursor: 'pointer',
-          boxShadow: '0 10px 20px rgba(0,114,255,0.3)', transition: 'transform 0.2s',
-          transform: 'scale(1)'
-        }} 
-        onMouseEnter={(e) => e.target.style.transform = 'scale(1.05)'} 
-        onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}>
-          ENTER
-        </button>
+    <div style={{ position: 'absolute', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="glass-panel" style={{ width: 'min(600px, 90vw)', padding: '30px' }}>
+        <h2 style={{ fontSize: '2rem', fontWeight: 200, marginBottom: '20px', color: 'var(--color-text)' }}>WELCOME TO <span style={{ color: 'var(--color-primary)', fontWeight: 600 }}>SONIC CANVAS</span></h2>
+        
+        <div style={{ display: 'grid', gap: '15px', marginBottom: '30px' }}>
+          <div style={{ display: 'flex', gap: '15px' }}>
+            <span style={{ fontSize: '1.5rem' }}>👆</span>
+            <div>
+              <strong style={{ color: 'var(--color-text)' }}>Click & Create</strong>
+              <div style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>Tap anywhere to drop physics-based notes. High energy = more visuals.</div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '15px' }}>
+            <span style={{ fontSize: '1.5rem' }}>🎛️</span>
+            <div>
+              <strong style={{ color: 'var(--color-text)' }}>Control Your Sound</strong>
+              <div style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>Use the right panel to switch scales (Neon, Ocean, Sunset) and adjust reverb.</div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '15px' }}>
+            <span style={{ fontSize: '1.5rem' }}>🌗</span>
+            <div>
+              <strong style={{ color: 'var(--color-text)' }}>Theme Switching</strong>
+              <div style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>Toggle between Cyber Dark and Studio Light modes.</div>
+            </div>
+          </div>
+        </div>
+
+        <button onClick={onClose} className="glass-button-hero" style={{ width: '100%' }}>START JAMMING</button>
       </div>
     </div>
   );

@@ -1,24 +1,154 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;400;600;800&family=JetBrains+Mono&display=swap');
+
 :root {
-  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /* --- Dark Theme (Cyber Studio) --- */
+  --color-bg: #050505;
+  --color-panel: rgba(22, 22, 28, 0.7);
+  --color-bg-inset: rgba(0, 0, 0, 0.4);
+  --color-border: rgba(255, 255, 255, 0.1);
+  --color-text: #f8fafc;
+  --color-text-muted: rgba(255, 255, 255, 0.5);
+  --color-primary: #00ffff;
+  --color-accent: #ff00ff;
+  --color-success: #4ade80;
+  --color-danger: #f87171;
+  --glass-blur: 20px;
+  --shadow-elevation: 0 12px 40px rgba(0, 0, 0, 0.7);
+}
+
+[data-theme='light'] {
+  /* --- Light Theme (Sonic Lab) --- */
+  --color-bg: #f1f5f9;
+  --color-panel: rgba(255, 255, 255, 0.8);
+  --color-bg-inset: rgba(241, 245, 249, 0.8);
+  --color-border: rgba(0, 0, 0, 0.08);
+  --color-text: #0f172a;
+  --color-text-muted: #64748b;
+  --color-primary: #2563eb;
+  --color-accent: #d946ef;
+  --color-success: #16a34a;
+  --color-danger: #dc2626;
+  --glass-blur: 24px;
+  --shadow-elevation: 0 8px 20px rgba(0, 0, 0, 0.05);
 }
 
 body {
   margin: 0;
   padding: 0;
-  width: 100vw;
-  height: 100vh;
+  font-family: 'Inter', sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
   overflow: hidden;
-  background-color: #050505; /* Default dark */
+  transition: background-color 0.4s ease;
+  user-select: none;
 }
 
-/* Utilities */
-.glass {
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+/* --- Glass UI Elements --- */
+
+.glass-panel {
+  backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+  background: var(--color-panel);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-elevation);
+  transition: transform 0.2s ease, background 0.4s ease;
 }
+
+.glass-input, .glass-select {
+  background: var(--color-bg-inset);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.glass-input:focus, .glass-select:focus {
+  border-color: var(--color-primary);
+}
+
+.glass-button {
+  background: var(--color-border);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.glass-button:hover {
+  background: var(--color-text);
+  color: var(--color-bg);
+}
+
+.glass-button-primary {
+  background: var(--color-primary);
+  color: #000;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.glass-button-primary:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.glass-button-hero {
+  background: var(--color-text);
+  color: var(--color-bg);
+  padding: 1rem 3.5rem;
+  border-radius: 50px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 0 15px var(--color-primary);
+  transition: transform 0.2s ease;
+}
+
+.glass-button-hero:hover {
+  transform: scale(1.05);
+}
+
+/* --- Typography Helpers --- */
+
+.label-text {
+  font-size: 0.65rem;
+  color: var(--color-text-muted);
+  display: block;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+}
+
+/* --- Animations --- */
+
+@keyframes pulse-ring {
+  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0.8; }
+  100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+}
+.pulse-animate { animation: pulse-ring 0.6s ease-out forwards; }
+
+@keyframes slide-up {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.animate-slide-up { animation: slide-up 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+
+/* --- Scrollbar --- */
+
+.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }

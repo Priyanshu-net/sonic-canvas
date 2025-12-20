@@ -1,43 +1,38 @@
 import React, { useState } from 'react';
 import { Panel } from './Panel';
 
-export const RoomPanel = ({ room, joinRoom, userName, setName, onInviteCopy, onStartContest, isDarkMode, mobile }) => {
-  const [roomInput, setRoomInput] = useState(room);
-  const [nameInput, setNameInput] = useState(userName);
-
-  const btnStyle = {
-    padding: '8px 12px', borderRadius: '8px', fontWeight: '600', border: 'none', cursor: 'pointer', fontSize: '0.85rem'
-  };
+export const RoomPanel = ({ room, joinRoom, userName, setName, initialX, initialY }) => {
+  const [roomInput, setRoomInput] = useState(room || 'lobby');
+  const [nameInput, setNameInput] = useState(userName || '');
 
   return (
-    <Panel title="🏷️ Profile" initialX={20} initialY={20} initialWidth={340} initialHeight={220} isDarkMode={isDarkMode} mobile={mobile}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        
+    <Panel title="Identity & Room" initialX={initialX} initialY={initialY}>
+      <div style={{ marginBottom: '16px' }}>
+        <label className="label-text">JAM ROOM</label>
         <div style={{ display: 'flex', gap: '8px' }}>
           <input 
-            value={nameInput} onChange={e => setNameInput(e.target.value)} placeholder="Your Name" 
-            style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid rgba(120,120,120,0.3)', background: 'transparent', color: 'inherit' }}
+            value={roomInput} 
+            onChange={(e) => setRoomInput(e.target.value)}
+            placeholder="Room Name"
+            className="glass-input"
+            style={{ flex: 1 }}
           />
-          <button onClick={() => setName(nameInput)} style={{ ...btnStyle, background: '#00ffff', color: '#000' }}>SET</button>
+          <button onClick={() => joinRoom(roomInput)} className="glass-button">Join</button>
         </div>
+      </div>
 
+      <div>
+        <label className="label-text">USER HANDLE</label>
         <div style={{ display: 'flex', gap: '8px' }}>
           <input 
-            value={roomInput} onChange={e => setRoomInput(e.target.value)} placeholder="Room ID" 
-            style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid rgba(120,120,120,0.3)', background: 'transparent', color: 'inherit' }}
+            value={nameInput} 
+            onChange={(e) => setNameInput(e.target.value)}
+            placeholder="Anonymous"
+            className="glass-input"
+            style={{ flex: 1 }}
           />
-          <button onClick={() => joinRoom(roomInput)} style={{ ...btnStyle, background: isDarkMode ? '#333' : '#eee', color: 'inherit' }}>JOIN</button>
+          <button onClick={() => setName(nameInput)} className="glass-button-primary">Set</button>
         </div>
-
-        <div style={{display:'flex', gap:'8px', marginTop: '4px'}}>
-            <button onClick={onInviteCopy} style={{ ...btnStyle, flex:1, background: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', color: 'inherit' }}>
-            🔗 Copy Link
-            </button>
-            <button onClick={() => onStartContest(30)} style={{ ...btnStyle, flex:1, background: 'linear-gradient(90deg, #ff00ff, #00ffff)', color: '#fff' }}>
-            🏆 Contest
-            </button>
-        </div>
-
       </div>
     </Panel>
   );

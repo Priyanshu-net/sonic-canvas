@@ -1,28 +1,28 @@
 import React from 'react';
 
-export const UsersPanel = ({ users = [], room = 'lobby', isDarkMode, mobile }) => {
-  const theme = {
-    bg: isDarkMode ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.6)',
-    text: isDarkMode ? '#fff' : '#111'
-  };
-
+export const UsersPanel = ({ users = [], room = 'lobby' }) => {
   return (
-    <div style={{
-      position: 'absolute', bottom: mobile ? 'auto' : '2rem', top: mobile ? '6rem' : 'auto', 
-      right: mobile ? '1rem' : '2rem', width: '260px',
-      background: theme.bg, backdropFilter: 'blur(16px)', borderRadius: '12px',
-      padding: '1rem', border: '1px solid rgba(120,120,120,0.2)', color: theme.text,
-      zIndex: 25, maxHeight: '30vh', overflowY: 'auto'
-    }}>
-      <div style={{ fontSize: '0.7rem', fontWeight: 800, opacity: 0.5, marginBottom: '10px', textTransform:'uppercase' }}>
-        Squad in #{room}
+    <div 
+      className="glass-panel"
+      style={{ 
+        position: 'absolute', 
+        bottom: '25px', 
+        right: '25px', 
+        width: '280px',
+        padding: '16px',
+        zIndex: 20
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+        <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--color-text-muted)' }}>JAMMERS ONLINE</span>
+        <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>#{room}</span>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-        {users.length === 0 && <span style={{opacity:0.5, fontSize:'0.8rem'}}>Scanning...</span>}
-        {users.map(u => (
-          <div key={u.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-            <span style={{fontWeight:500}}>{u.name || 'Anonymous'}</span>
-            <span style={{ fontWeight: 700, color: '#00ffff' }}>{u.beats || 0}</span>
+      
+      <div style={{ maxHeight: '150px', overflowY: 'auto' }} className="custom-scrollbar">
+        {users.map((u, i) => (
+          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--color-border)' }}>
+            <span style={{ fontSize: '0.85rem' }}>{u.name || 'Anonymous'}</span>
+            <span style={{ fontSize: '0.8rem', color: 'var(--color-primary)', fontFamily: 'monospace' }}>{u.beats || 0}</span>
           </div>
         ))}
       </div>

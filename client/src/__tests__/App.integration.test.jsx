@@ -57,12 +57,6 @@ describe('App integration', () => {
   it('plays note and emits particles when a physics collision occurs', async () => {
     render(<App PhysicsSceneComponent={MockPhysicsScene} />);
 
-    // Ensure graphics are enabled (on touch-like envs it's off by default)
-    const graphicsToggle = await screen.findByRole('checkbox');
-    if (!graphicsToggle.checked) {
-      fireEvent.click(graphicsToggle);
-    }
-
     const scene = await screen.findByTestId('physics-scene');
     fireEvent.click(scene);
 

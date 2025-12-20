@@ -1,45 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Panel } from './Panel';
 
-export const ChatPanel = ({ messages = [], sendMessage, mobile, isDarkMode = true }) => {
-  const [chatInput, setChatInput] = useState('');
-  
-  const theme = {
-    bg: isDarkMode ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.5)',
-    input: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-    text: isDarkMode ? '#eee' : '#333',
-    accent: '#00ffff'
+export const ChatPanel = ({ messages = [], sendMessage, initialX, initialY }) => {
+  const [input, setInput] = useState('');
+  const scrollRef = useRef();
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const handleSend = () => {
+    if (!input.trim()) return;
+    sendMessage(input);
+    setInput('');
   };
 
   return (
-    <Panel title="💬 Comms" initialX={20} initialY={300} initialWidth={340} initialHeight={240} mobile={mobile} isDarkMode={isDarkMode}>
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '10px' }}>
-        <div style={{ 
-          flex: 1, overflowY: 'auto', background: theme.bg, 
-          borderRadius: '12px', padding: '10px', 
-          fontSize: '0.85rem', display: 'flex', flexDirection: 'column', gap: '6px'
-        }}>
-          {messages.length === 0 && <div style={{opacity:0.5, fontStyle:'italic'}}>Channel open...</div>}
-          {messages.slice(-20).map((m, i) => (
-            <div key={i} style={{ lineHeight: '1.3' }}>
-              <span style={{ color: theme.accent, fontWeight: '700', fontSize: '0.75rem', marginRight: '6px' }}>{m.from}</span>
-              <span style={{ color: theme.text, opacity: 0.9 }}>{m.text}</span>
-            </div>
-          ))}
-        </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <input
-            value={chatInput}
-            onChange={(e) => setChatInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && (sendMessage(chatInput), setChatInput(''))}
-            placeholder="Transmit..."
-            style={{ 
-              flex: 1, padding: '10px 14px', borderRadius: '8px', 
-              border: 'none', background: theme.input, color: theme.text,
-              outline: 'none', fontSize: '0.9rem'
-            }}
-          />
-        </div>
+    <Panel title="Studio Chat" initialX={initialX} initialY={initialY} initialHeight={240}>
+      <div 
+        ref={scrollRef}
+        style={{ 
+          height: '120px', 
+          overflowY: 'auto', 
+          background: 'var(--color-bg-inset)', 
+          borderRadius: '8px',
+          padding: '10px',
+          marginBottom: '12px'
+        }}
+        className="custom-scrollbar"
+      >
+        {messages.map((m, i) => (
+          <div key={i} style={{ fontSize: '0.8rem', marginBottom: '6px' }}>
+            <span style={{ color: 'var(--color-primary)', fontWeight: 'bold' }}>{m.from}</span>: 
+            <span style={{ color: 'var(--color-text)', marginLeft: '5px' }}>{m.text}</span>
+          </div>
+        ))}
+      </div>
+      
+      <div style={{ display: 'flex', gap: '8px' }}>
+        <input 
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+          placeholder="Message..."
+          className="glass-input"
+          style={{ flex: 1 }}
+        />
+        <button onClick={handleSend} className="glass-button">Send</button>
       </div>
     </Panel>
   );
