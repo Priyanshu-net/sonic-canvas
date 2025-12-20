@@ -8,7 +8,7 @@ import * as THREE from 'three';
 /**
  * PhysicsBall - A physics-enabled sphere that falls and bounces
  */
-const PhysicsBall = ({ initialPosition, color, note, onCollide, energyLevel = 0, id }) => {
+const PhysicsBall = ({ initialPosition, color, note, onCollide, energyLevel = 0, id, lowPerf = false }) => {
   const hasImpulseRef = useRef(false);
   const [ref, api] = useSphere(() => ({
     mass: 1,
@@ -66,20 +66,20 @@ const PhysicsBall = ({ initialPosition, color, note, onCollide, energyLevel = 0,
   if (!isVisible) return null;
 
   return (
-    <mesh ref={ref} castShadow receiveShadow>
+    <mesh ref={ref} castShadow={!lowPerf} receiveShadow={!lowPerf}>
       {isHighEnergy ? (
         <icosahedronGeometry args={[0.3, 0]} />
       ) : (
-        <sphereGeometry args={[0.3, 16, 16]} />
+        <sphereGeometry args={[0.3, 12, 12]} />
       )}
       <meshStandardMaterial
         color={color}
         emissive={color}
-        emissiveIntensity={emissiveIntensity}
+        emissiveIntensity={lowPerf ? emissiveIntensity * 0.7 : emissiveIntensity}
         roughness={0.3}
         metalness={0.7}
       />
-      {isHighEnergy && (
+      {isHighEnergy && !lowPerf && (
         <pointLight position={[0, 0, 0]} color={color} intensity={2} distance={3} />
       )}
     </mesh>
@@ -179,6 +179,7 @@ const ImpactParticles = ({ position, color }) => {
  */
 const World = ({ balls, onBallCollision, energyLevel, cps, bloomIntensity }) => {
   const [impacts, setImpacts] = useState([]);
+  const [lowPerf, setLowPerf] = useState(false);
   const { camera } = useThree();
   const raycasterRef = useRef(new THREE.Raycaster());
   const floorPlaneRef = useRef(new THREE.Plane(new THREE.Vector3(0, 1, 0), 5)); // y = -5 plane
@@ -202,11 +203,29 @@ const World = ({ balls, onBallCollision, energyLevel, cps, bloomIntensity }) => 
 
   const renderBalls = balls.slice(-40);
 
+  // FPS monitor: enable lowPerf when sustained avg FPS is low
+  const fpsSamplesRef = useRef([]);
+  useFrame((state, delta) => {
+    const fps = 1 / Math.max(delta, 0.0001);
+    const samples = fpsSamplesRef.current;
+    samples.push(fps);
+    if (samples.length > 60) samples.shift();
+    const avg = samples.reduce((a, b) => a + b, 0) / samples.length;
+    if (!lowPerf && avg < 50) setLowPerf(true);
+    if (lowPerf && avg > 58) setLowPerf(false);
+  });
+
   return (
     <>
-      <Physics gravity={[0, -9.8, 0]} defaultContactMaterial={{ friction: 0.02, restitution: 0.8 }}>
+      <Physics
+        gravity={[0, -9.8, 0]}
+        allowSleep
+        broadphase="SAP"
+        iterations={5}
+        defaultContactMaterial={{ friction: 0.02, restitution: 0.8 }}
+      >
         <PhysicsFloor />
-        {renderBalls.map((ball) => {
+        {(lowPerf ? balls.slice(-25) : renderBalls).map((ball) => {
           const hasPos = Array.isArray(ball.position);
           const nx = ball.nx ?? ball.x;
           const ny = ball.ny ?? ball.y;
@@ -223,26 +242,29 @@ const World = ({ balls, onBallCollision, energyLevel, cps, bloomIntensity }) => 
               note={ball.note}
               onCollide={handleCollision}
               energyLevel={energyLevel}
+              lowPerf={lowPerf}
             />
           );
         })}
       </Physics>
 
-      {impacts.map((impact) => (
+      {!lowPerf && impacts.map((impact) => (
         <ImpactParticles key={impact.id} position={impact.position} color={impact.color} />
       ))}
 
-      <CameraShake energyLevel={energyLevel} cps={cps} />
+      {!lowPerf && <CameraShake energyLevel={energyLevel} cps={cps} />}
 
-      <EffectComposer>
-        <Bloom
-          intensity={bloomIntensity ?? (energyLevel > 10 ? 3.5 : 2.0)}
-          luminanceThreshold={0}
-          luminanceSmoothing={0.9}
-          mipmapBlur
-          radius={0.8}
-        />
-      </EffectComposer>
+      {!lowPerf && (
+        <EffectComposer>
+          <Bloom
+            intensity={bloomIntensity ?? (energyLevel > 10 ? 3.5 : 2.0)}
+            luminanceThreshold={0}
+            luminanceSmoothing={0.9}
+            mipmapBlur
+            radius={0.8}
+          />
+        </EffectComposer>
+      )}
     </>
   );
 };

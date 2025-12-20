@@ -31,7 +31,7 @@ export const useSocket = (initialRoom = 'lobby') => {
   const [room, setRoom] = useState(initialRoom);
   const [users, setUsers] = useState([]); // roster for current room
   const [userName, setUserName] = useState('');
-  const [contest, setContest] = useState({ active: false, remaining: 0, leaderboard: [] });
+  const [contest, setContest] = useState({ active: false, remaining: 0, leaderboard: [], winner: null, endedAt: 0, message: '' });
 
   useEffect(() => {
     // Initialize Socket.io client
@@ -80,16 +80,26 @@ export const useSocket = (initialRoom = 'lobby') => {
     // Contest events
     socket.on('contest-start', ({ duration, endTime }) => {
       const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
-      setContest({ active: true, remaining, leaderboard: [] });
+      setContest({ active: true, remaining, leaderboard: [], winner: null, endedAt: 0, message: `🎮 Contest started! ${duration}s — tap fast, highest CPS wins! 🔥` });
     });
     socket.on('contest-update', ({ remaining, leaderboard }) => {
       setContest({ active: true, remaining, leaderboard });
     });
     socket.on('contest-end', ({ winner, leaderboard }) => {
-      setContest({ active: false, remaining: 0, leaderboard });
+      const name = winner?.name || 'Anonymous';
+      const beats = winner?.beats ?? 0;
+      const peak = winner?.peakCps ?? 0;
+      setContest({
+        active: false,
+        remaining: 0,
+        leaderboard,
+        winner,
+        endedAt: Date.now(),
+        message: `🏆 Winner: ${name} — ${beats} beats • peak ${peak} CPS 🎉`
+      });
     });
     socket.on('contest-none', () => {
-      setContest({ active: false, remaining: 0, leaderboard: [] });
+      setContest({ active: false, remaining: 0, leaderboard: [], winner: null, endedAt: 0, message: '' });
     });
 
     // Cleanup on unmount

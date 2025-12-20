@@ -91,6 +91,10 @@ export const ControlsPanel = ({ currentPalette, setCurrentPalette, bloomIntensit
           style={{ width: '100%' }}
         />
         <div style={{ fontSize: mobile ? '0.7rem' : '0.75rem', opacity: 0.7 }}>Wet: {reverbWet.toFixed(2)}</div>
+        <div style={{ fontSize: mobile ? '0.7rem' : '0.75rem', opacity: 0.75, marginTop: '0.25rem', lineHeight: 1.4 }}>
+          Tip: Wet controls how much of the echo/reverb you hear — 0 is dry, 1 is cavernous.
+          {mobile ? ' On mobile, keep it at or below ~0.4 for smoother performance.' : ' Higher wet values add ambience but may cost some performance.'}
+        </div>
       </div>
 
       {/* Haptics Toggle */}

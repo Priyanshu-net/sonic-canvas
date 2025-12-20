@@ -3,7 +3,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 
-export function createSonicCanvasServer({ port = 3001, corsOrigin = 'http://localhost:5173' } = {}) {
+export function createSonicCanvasServer({ port = 3001, corsOrigin = 'http://localhost:5173', roomCleanupMs = 120000 } = {}) {
   const app = express();
   const httpServer = createServer(app);
 
@@ -26,6 +26,21 @@ export function createSonicCanvasServer({ port = 3001, corsOrigin = 'http://loca
   const users = new Map(); // socket.id -> { name: string, beats: number, lastAction: number }
   // Contest state per room
   const contests = new Map(); // room -> { active: boolean, endTime: number, duration: number, scores: Map<socketId, { beats: number, peakCps: number }>, timer: NodeJS.Timeout }
+  // Track last activity per room for cleanup (join, beat, contest start)
+  const roomLastActive = new Map(); // room -> timestamp
+  const touchRoom = (room) => { if (!room) return; roomLastActive.set(room, Date.now()); };
+  // Helper: end contest early or on timer, emit result and cleanup
+  const endContest = (room, { reason = 'timer' } = {}) => {
+    const contest = contests.get(room);
+    if (!contest) return;
+    if (contest.timer) clearTimeout(contest.timer);
+    const leaderboard = Array.from(contest.scores.entries())
+      .map(([id, s]) => ({ id, name: users.get(id)?.name || `Anon-${id.slice(0,4)}`, beats: s.beats, peakCps: s.peakCps }))
+      .sort((a, b) => b.beats - a.beats || b.peakCps - a.peakCps);
+    const winner = reason === 'room-empty' ? null : (leaderboard[0] || null);
+    io.to(room).emit('contest-end', { room, winner, leaderboard, endedReason: reason });
+    contests.delete(room);
+  };
 
   const getRoomSize = (room) => (io.sockets.adapter.rooms.get(room)?.size || 0);
   const getUsersInRoom = (room) => {
@@ -47,10 +62,11 @@ export function createSonicCanvasServer({ port = 3001, corsOrigin = 'http://loca
     // Init user entry
     users.set(socket.id, { name: `Anon-${socket.id.slice(0,4)}`, beats: 0, lastAction: Date.now() });
 
-    // Auto-join default room 'lobby'
+  // Auto-join default room 'lobby'
     const defaultRoom = 'lobby';
     socket.join(defaultRoom);
     socketRoom.set(socket.id, defaultRoom);
+  touchRoom(defaultRoom);
     io.to(defaultRoom).emit('user-count', getRoomSize(defaultRoom));
     socket.emit('room-joined', { room: defaultRoom });
     broadcastRoomUsers(defaultRoom);
@@ -64,6 +80,10 @@ export function createSonicCanvasServer({ port = 3001, corsOrigin = 'http://loca
           // update old room count
           io.to(prev).emit('user-count', getRoomSize(prev));
           broadcastRoomUsers(prev);
+          // If previous room becomes empty, end any active contest to cleanup
+          if (getRoomSize(prev) === 0 && contests.has(prev)) {
+            endContest(prev, { reason: 'room-empty' });
+          }
         }
         socket.join(target);
         socketRoom.set(socket.id, target);
@@ -72,6 +92,7 @@ export function createSonicCanvasServer({ port = 3001, corsOrigin = 'http://loca
         io.to(target).emit('user-count', getRoomSize(target));
         console.log(`� ${socket.id} joined room: ${target}`);
         broadcastRoomUsers(target);
+        touchRoom(target);
       } catch (e) {
         console.error('join-room error', e);
       }
@@ -89,10 +110,11 @@ export function createSonicCanvasServer({ port = 3001, corsOrigin = 'http://loca
       const room = socketRoom.get(socket.id) || 'lobby';
       const info = users.get(socket.id) || { name: `Anon-${socket.id.slice(0,4)}`, beats: 0, lastAction: 0 };
       users.set(socket.id, { ...info, beats: (info.beats || 0) + 1, lastAction: Date.now() });
-      const enriched = { ...payload, userName: info.name };
+  const enriched = { ...payload, userName: info.name };
       console.log('🎹 Beat triggered in', room, enriched);
       io.to(room).emit('receive-beat', enriched);
       broadcastRoomUsers(room);
+  touchRoom(room);
 
       // Contest scoring
       const contest = contests.get(room);
@@ -133,19 +155,11 @@ export function createSonicCanvasServer({ port = 3001, corsOrigin = 'http://loca
         // Initialize contest state
         const endTime = Date.now() + Math.max(5, duration) * 1000;
         const scores = new Map();
-        const timer = setTimeout(() => {
-          const contest = contests.get(room);
-          if (!contest) return;
-          const leaderboard = Array.from(contest.scores.entries())
-            .map(([id, s]) => ({ id, name: users.get(id)?.name || `Anon-${id.slice(0,4)}`, beats: s.beats, peakCps: s.peakCps }))
-            .sort((a, b) => b.beats - a.beats || b.peakCps - a.peakCps);
-          const winner = leaderboard[0] || null;
-          io.to(room).emit('contest-end', { room, winner, leaderboard });
-          contests.delete(room);
-        }, Math.max(5, duration) * 1000);
+        const timer = setTimeout(() => endContest(room, { reason: 'timer' }), Math.max(5, duration) * 1000);
 
         contests.set(room, { active: true, endTime, duration, scores, timer });
         io.to(room).emit('contest-start', { room, duration, endTime });
+        touchRoom(room);
       } catch (e) {
         console.error('start-contest error', e);
       }
@@ -205,9 +219,38 @@ export function createSonicCanvasServer({ port = 3001, corsOrigin = 'http://loca
         io.to(room).emit('user-count', getRoomSize(room));
         console.log(`👥 Users in ${room}: ${getRoomSize(room)}`);
         broadcastRoomUsers(room);
+        // If room is now empty, end any active contest to free resources
+        if (getRoomSize(room) === 0 && contests.has(room)) {
+          endContest(room, { reason: 'room-empty' });
+        }
+        touchRoom(room);
       }, 100);
     });
   });
+
+  // Periodic cleanup: clear stale room data after roomCleanupMs of inactivity
+  // Check frequency adapts to configured cleanup time while avoiding overly tight loops
+  const cleanupIntervalMs = Math.max(100, Math.min(30000, Math.floor(roomCleanupMs / 2)));
+  const cleanupTimer = setInterval(() => {
+    const now = Date.now();
+    for (const [room, last] of roomLastActive.entries()) {
+      const size = getRoomSize(room);
+      const idle = now - last;
+      if (size === 0 && idle >= roomCleanupMs) {
+        try {
+          // End any contest if somehow still present
+          if (contests.has(room)) {
+            endContest(room, { reason: 'cleanup' });
+          }
+          roomLastActive.delete(room);
+          io.emit('room-cleanup', { room, idleMs: idle });
+          console.log(`🧹 Cleaned up room '${room}' after ${Math.round(idle/1000)}s idle`);
+        } catch (e) {
+          console.warn('room cleanup error', e);
+        }
+      }
+    }
+  }, cleanupIntervalMs);
 
   const listen = () => new Promise((resolve) => {
     httpServer.listen(port, () => {
@@ -218,6 +261,7 @@ export function createSonicCanvasServer({ port = 3001, corsOrigin = 'http://loca
   });
 
   const close = () => new Promise((resolve) => {
+    clearInterval(cleanupTimer);
     io.close(() => {
       httpServer.close(() => resolve());
     });

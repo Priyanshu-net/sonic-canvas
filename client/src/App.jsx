@@ -31,7 +31,7 @@ function App() {
   const [bloomIntensity, setBloomIntensity] = useState(isTouchDevice ? 1.2 : 2.0);
   const [showAchievement, setShowAchievement] = useState(null);
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
-  const [reverbWet, setReverbWetUI] = useState(0.4);
+  const [reverbWet, setReverbWetUI] = useState(isTouchDevice ? 0.3 : 0.4);
   const [showOnboarding, setShowOnboarding] = useState(() => {
     try {
       return localStorage.getItem('sc_onboarded') !== '1';
@@ -248,19 +248,21 @@ function App() {
       overflow: 'hidden',
       fontFamily: 'Inter, sans-serif'
     }}>
-      {/* 3D Canvas Scene - Background Layer */}
-      <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-        <Suspense fallback={<div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',color:'#888'}}>Loading 3D scene…</div>}>
-          <PhysicsSceneLazy 
-            balls={physicsBalls} 
-            onBallCollision={handleBallCollision}
-            energyLevel={energyLevel}
-            cps={cps}
-            bloomIntensity={bloomIntensity}
-            mobile={isTouchDevice}
-          />
-        </Suspense>
-      </div>
+      {/* 3D Canvas Scene - Background Layer (deferred until audio starts) */}
+      {(isAudioReady || import.meta.env.MODE === 'test') && (
+        <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+          <Suspense fallback={<div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',color:'#888'}}>Loading 3D scene…</div>}>
+            <PhysicsSceneLazy 
+              balls={physicsBalls} 
+              onBallCollision={handleBallCollision}
+              energyLevel={energyLevel}
+              cps={cps}
+              bloomIntensity={bloomIntensity}
+              mobile={isTouchDevice}
+            />
+          </Suspense>
+        </div>
+      )}
 
       {/* Floating Header - SONIC CANVAS */}
       <div style={{

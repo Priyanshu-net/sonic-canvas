@@ -102,3 +102,42 @@ test('contest lifecycle: start, score, end with winner', async (t) => {
   b.close();
   await s.close();
 });
+
+test('room cleanup triggers after idle (short timeout)', async () => {
+  const port = TEST_PORT + 2;
+  const url = `http://localhost:${port}`;
+  // Use a very short cleanup period for test (200ms)
+  const s = createSonicCanvasServer({ port, corsOrigin: ['http://localhost:5173'], roomCleanupMs: 200 });
+  await s.listen();
+
+  const a = new Client(url, { transports: ['websocket'] });
+  await new Promise((resolve, reject) => { a.on('connect', resolve); a.on('connect_error', reject); });
+
+  // Join a custom room
+  a.emit('join-room', { room: 'testroom' });
+  await new Promise((resolve) => a.on('room-joined', ({ room }) => room === 'testroom' && resolve()));
+
+  // Start a contest to create room activity
+  a.emit('start-contest', { duration: 1 });
+  await new Promise((resolve) => a.on('contest-start', resolve));
+
+  // Disconnect client so room becomes empty
+  a.close();
+
+  // Await cleanup event
+  const cleaned = await new Promise((resolve) => {
+    // Create a listener client just for receiving global cleanup event
+    const b = new Client(url, { transports: ['websocket'] });
+    b.on('connect', () => {
+      b.on('room-cleanup', (payload) => {
+        if (payload?.room === 'testroom') {
+          b.close();
+          resolve(payload);
+        }
+      });
+    });
+  });
+
+  assert.equal(cleaned.room, 'testroom');
+  await s.close();
+});
