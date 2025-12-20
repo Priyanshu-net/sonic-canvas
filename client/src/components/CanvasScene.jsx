@@ -17,6 +17,17 @@ export const CanvasScene = ({ beats = [], isDarkMode = true }) => {
       {/* Lighting adapts to theme */}
       <ambientLight intensity={isDarkMode ? 0.4 : 0.8} />
       <pointLight position={[10, 10, 10]} intensity={isDarkMode ? 1.5 : 0.8} />
+
+      {/* Subtle floor grid for spatial reference */}
+      <gridHelper
+        args={[
+          200, // size
+          80,  // divisions
+          isDarkMode ? '#3a3a55' : '#9fb3c8', // center line color
+          isDarkMode ? '#202036' : '#d6e2ef'  // grid color
+        ]}
+        position={[0, -4, 0]}
+      />
       
       {beats.map((beat) => (
         <Beat key={beat.id} position={beat.position} color={beat.color} isDarkMode={isDarkMode} />
