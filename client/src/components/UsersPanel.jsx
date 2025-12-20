@@ -18,7 +18,7 @@ export const UsersPanel = ({ users = [], room = 'lobby', mobile = false }) => {
       padding: '0.75rem',
       zIndex: 13,
       color: '#fff'
-    } : {
+  } : {
       position: 'absolute',
       bottom: '2rem',
       right: '2rem',
@@ -30,7 +30,7 @@ export const UsersPanel = ({ users = [], room = 'lobby', mobile = false }) => {
       border: '1px solid rgba(255, 255, 255, 0.2)',
       borderRadius: '0.75rem',
       padding: '1rem',
-      zIndex: 12,
+      zIndex: 25,
       color: '#fff'
     }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '0.5rem' }}>

@@ -29,7 +29,10 @@ function App() {
   const [currentPalette, setCurrentPalette] = useState('neon');
   const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
   const [bloomIntensity, setBloomIntensity] = useState(isTouchDevice ? 1.2 : 2.0);
-  const [graphicsEnabled, setGraphicsEnabled] = useState(true);
+  const [graphicsEnabled, setGraphicsEnabled] = useState(() => {
+    // Default: disable graphics on touch devices to avoid initial hangs
+    return !isTouchDevice;
+  });
   const [showAchievement, setShowAchievement] = useState(null);
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
   const [reverbWet, setReverbWetUI] = useState(isTouchDevice ? 0.3 : 0.4);
@@ -250,7 +253,7 @@ function App() {
       fontFamily: 'Inter, sans-serif'
     }}>
       {/* 3D Canvas Scene - Background Layer (deferred until audio starts) */}
-      {(graphicsEnabled && (isAudioReady || import.meta.env.MODE === 'test')) && (
+      {((graphicsEnabled || import.meta.env.MODE === 'test') && (isAudioReady || import.meta.env.MODE === 'test')) && (
         <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
           <Suspense fallback={<div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',color:'#888'}}>Loading 3D scene…</div>}>
             <PhysicsSceneLazy 
