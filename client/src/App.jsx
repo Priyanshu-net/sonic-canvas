@@ -20,7 +20,7 @@ const COLOR_PALETTES = {
 
 function App() {
   const { playNote, playNoteName, startAudio, isAudioReady, mapYToNote, updateFilter, setSynthPreset, setReverbWet } = useSynth();
-  const { socket, isConnected, room, joinRoom, users, userName, setName } = useSocket('lobby');
+  const { socket, isConnected, room, joinRoom, users, userName, setName, contest, startContest } = useSocket('lobby');
   const { particles, addExplosion } = useParticles();
   const { combo, score, cps, energyLevel, incrementCombo, resetCombo, getComboMultiplier, getEnergyState } = useGameification();
   const [clicks, setClicks] = useState([]);
@@ -292,6 +292,7 @@ function App() {
         combo={combo}
         getComboMultiplier={getComboMultiplier}
         userCount={userCount}
+        contest={contest}
         mobile={isTouchDevice}
       />
 
@@ -311,6 +312,7 @@ function App() {
         reverbWet={reverbWet}
   setReverbWet={setReverbWetUI}
         mobile={isTouchDevice}
+        onStartContest={(d) => startContest?.(d)}
         onInviteCopy={() => {
           const url = new URL(window.location.href);
           if (room) url.searchParams.set('room', room);

@@ -1,7 +1,7 @@
 // File: ControlsPanel.jsx
 import React, { useState } from 'react';
 
-export const ControlsPanel = ({ currentPalette, setCurrentPalette, bloomIntensity, setBloomIntensity, room, joinRoom, userName = '', setName = () => {}, hapticsEnabled = true, setHapticsEnabled = () => {}, reverbWet = 0.4, setReverbWet = () => {}, onInviteCopy = () => {}, mobile = false }) => {
+export const ControlsPanel = ({ currentPalette, setCurrentPalette, bloomIntensity, setBloomIntensity, room, joinRoom, userName = '', setName = () => {}, hapticsEnabled = true, setHapticsEnabled = () => {}, reverbWet = 0.4, setReverbWet = () => {}, onInviteCopy = () => {}, mobile = false, onStartContest = () => {} }) => {
   const [roomInput, setRoomInput] = useState(room || 'lobby');
   const [nameInput, setNameInput] = useState(userName || '');
   const containerStyle = mobile ? {
@@ -183,6 +183,19 @@ export const ControlsPanel = ({ currentPalette, setCurrentPalette, bloomIntensit
             flex: 1
           }}
         >Copy Invite Link</button>
+        <button
+          onClick={() => onStartContest(30)}
+          title="Start a 30s jamming contest"
+          style={{
+            background: 'rgba(0,255,255,0.15)',
+            border: '1px solid rgba(0,255,255,0.35)',
+            color: '#00ffff',
+            borderRadius: '0.5rem',
+            padding: mobile ? '0.5rem' : '0.5rem 0.75rem',
+            cursor: 'pointer',
+            flex: 1
+          }}
+        >Start 30s Contest</button>
       </div>
 
       {/* Help */}

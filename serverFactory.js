@@ -24,6 +24,8 @@ export function createSonicCanvasServer({ port = 3001, corsOrigin = 'http://loca
   // Track which room a socket is in and user info (single room per socket)
   const socketRoom = new Map(); // socket.id -> roomName
   const users = new Map(); // socket.id -> { name: string, beats: number, lastAction: number }
+  // Contest state per room
+  const contests = new Map(); // room -> { active: boolean, endTime: number, duration: number, scores: Map<socketId, { beats: number, peakCps: number }>, timer: NodeJS.Timeout }
 
   const getRoomSize = (room) => (io.sockets.adapter.rooms.get(room)?.size || 0);
   const getUsersInRoom = (room) => {
@@ -91,6 +93,81 @@ export function createSonicCanvasServer({ port = 3001, corsOrigin = 'http://loca
       console.log('🎹 Beat triggered in', room, enriched);
       io.to(room).emit('receive-beat', enriched);
       broadcastRoomUsers(room);
+
+      // Contest scoring
+      const contest = contests.get(room);
+      if (contest?.active) {
+        const now = Date.now();
+        let entry = contest.scores.get(socket.id);
+        if (!entry) {
+          entry = { beats: 0, peakCps: 0 };
+        }
+        entry.beats += 1;
+        // Compute CPS per user from recent beats in last second; maintain a small array on users map
+        const u = users.get(socket.id) || {};
+        if (!u.beatTimes) u.beatTimes = [];
+        u.beatTimes.push(now);
+        // keep last 2s window
+        u.beatTimes = u.beatTimes.filter((t) => now - t <= 2000);
+        const cpsNow = u.beatTimes.filter((t) => now - t <= 1000).length;
+        entry.peakCps = Math.max(entry.peakCps, cpsNow);
+        contest.scores.set(socket.id, entry);
+        // Broadcast contest update (lightweight)
+        const remaining = Math.max(0, Math.floor((contest.endTime - now) / 1000));
+        io.to(room).emit('contest-update', {
+          room,
+          remaining,
+          leaderboard: Array.from(contest.scores.entries())
+            .map(([id, s]) => ({ id, name: users.get(id)?.name || `Anon-${id.slice(0,4)}`, beats: s.beats, peakCps: s.peakCps }))
+            .sort((a, b) => b.beats - a.beats || b.peakCps - a.peakCps)
+        });
+      }
+    });
+    // Start a timed contest in the current room
+    socket.on('start-contest', ({ duration = 30 } = {}) => {
+      const room = socketRoom.get(socket.id) || 'lobby';
+      try {
+        // End existing contest if any
+        const prev = contests.get(room);
+        if (prev?.timer) clearTimeout(prev.timer);
+        // Initialize contest state
+        const endTime = Date.now() + Math.max(5, duration) * 1000;
+        const scores = new Map();
+        const timer = setTimeout(() => {
+          const contest = contests.get(room);
+          if (!contest) return;
+          const leaderboard = Array.from(contest.scores.entries())
+            .map(([id, s]) => ({ id, name: users.get(id)?.name || `Anon-${id.slice(0,4)}`, beats: s.beats, peakCps: s.peakCps }))
+            .sort((a, b) => b.beats - a.beats || b.peakCps - a.peakCps);
+          const winner = leaderboard[0] || null;
+          io.to(room).emit('contest-end', { room, winner, leaderboard });
+          contests.delete(room);
+        }, Math.max(5, duration) * 1000);
+
+        contests.set(room, { active: true, endTime, duration, scores, timer });
+        io.to(room).emit('contest-start', { room, duration, endTime });
+      } catch (e) {
+        console.error('start-contest error', e);
+      }
+    });
+
+    // Allow clients to query current contest state
+    socket.on('get-contest', () => {
+      const room = socketRoom.get(socket.id) || 'lobby';
+      const c = contests.get(room);
+      if (!c) {
+        socket.emit('contest-none', { room });
+        return;
+      }
+      const now = Date.now();
+      const remaining = Math.max(0, Math.floor((c.endTime - now) / 1000));
+      socket.emit('contest-update', {
+        room,
+        remaining,
+        leaderboard: Array.from(c.scores.entries())
+          .map(([id, s]) => ({ id, name: users.get(id)?.name || `Anon-${id.slice(0,4)}`, beats: s.beats, peakCps: s.peakCps }))
+          .sort((a, b) => b.beats - a.beats || b.peakCps - a.peakCps)
+      });
     });
 
     // Lightweight analytics: client can send UX events for future dashboards

@@ -33,20 +33,21 @@ vi.mock('../hooks/useSynth', () => ({
     isAudioReady: true,
     mapYToNote: vi.fn().mockReturnValue('C4'),
     updateFilter,
+    setReverbWet: vi.fn(),
   })
 }));
 
 import App from '../App.jsx';
 
 describe('App integration', () => {
-  it('plays note and emits particles on physics collision', () => {
+  it('plays note and emits particles on physics collision', async () => {
     render(<App />);
 
     // Clicking the scene triggers mocked onBallCollision
-    const scene = screen.getByTestId('physics-scene');
+    const scene = await screen.findByTestId('physics-scene');
     fireEvent.click(scene);
 
-    expect(playNoteName).toHaveBeenCalledWith('C4');
+  expect(playNoteName).toHaveBeenCalledWith('C4', expect.any(Object));
     expect(addExplosion).toHaveBeenCalled();
   });
 });

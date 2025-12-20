@@ -1,6 +1,7 @@
 import React from 'react';
 export const Canvas = ({ children, ...rest }) => (
-  <div data-testid="canvas" {...rest}>{children}</div>
+  React.createElement('div', { 'data-testid': 'canvas', ...rest }, children)
 );
 export const useFrame = () => {};
-export default { Canvas, useFrame };
+export const useThree = () => ({ camera: { position: { x: 0, y: 0, z: 0 } } });
+export default { Canvas, useFrame, useThree };

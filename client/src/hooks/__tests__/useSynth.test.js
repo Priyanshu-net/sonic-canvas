@@ -8,11 +8,16 @@ vi.mock('tone', () => {
     constructor() {}
     triggerAttackRelease = triggerAttackRelease;
     connect() { return this; }
+    chain() { return this; }
     dispose() {}
   }
-  class Reverb { constructor() { this.wet = 0; } toDestination(){ return this; } dispose(){} }
+  class Reverb { constructor() { this.wet = { rampTo: vi.fn() }; } toDestination(){ return this; } dispose(){} }
   class PingPongDelay { constructor() { this.wet = 0; } connect(){ return this; } dispose(){} }
   class Filter { constructor(){ this.frequency = { rampTo: vi.fn() }; } connect(){ return this; } dispose(){} }
+  class Panner { constructor(){ this.pan = { rampTo: vi.fn() }; } }
+  class Compressor { constructor(){ return this; } }
+  class Limiter { constructor(){ return this; } }
+  const getDestination = () => ({})
   return {
     default: {},
     start: vi.fn().mockResolvedValue(undefined),
@@ -21,6 +26,10 @@ vi.mock('tone', () => {
     Reverb,
     PingPongDelay,
     Filter,
+    Panner,
+    Compressor,
+    Limiter,
+    getDestination,
   };
 });
 

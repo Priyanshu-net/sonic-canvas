@@ -9,12 +9,24 @@ import * as THREE from 'three';
  * PhysicsBall - A physics-enabled sphere that falls and bounces
  */
 const PhysicsBall = ({ initialPosition, color, note, onCollide, energyLevel = 0, id }) => {
-  const [ref] = useSphere(() => ({
+  const hasImpulseRef = useRef(false);
+  const [ref, api] = useSphere(() => ({
     mass: 1,
     position: initialPosition,
     restitution: 0.8, // Bounciness
+    linearDamping: 0.01,
+    angularDamping: 0.02,
     args: [0.3], // Radius
-    onCollide: () => {
+    onCollide: (e) => {
+      // Apply a small lateral impulse on floor collision to reduce stacking
+      // Treat collisions against static bodies (mass === 0) as floor/planes
+      if (!hasImpulseRef.current && e?.body && e.body.mass === 0) {
+        const ix = (Math.random() - 0.5) * 1.2;
+        const iz = (Math.random() - 0.5) * 1.2;
+        const iy = Math.random() * 0.3; // tiny upward kick
+        api?.applyImpulse?.([ix, iy, iz], [0, 0, 0]);
+        hasImpulseRef.current = true;
+      }
       if (!onCollide || !ref.current) return;
       const p = ref.current.position;
       const point = [p.x, p.y, p.z];
@@ -24,6 +36,18 @@ const PhysicsBall = ({ initialPosition, color, note, onCollide, energyLevel = 0,
 
   const [isVisible, setIsVisible] = useState(true);
   const spawnTime = useRef(Date.now());
+
+  // Give initial lateral velocity and some spin so balls spread out
+  useEffect(() => {
+    const vx = (Math.random() - 0.5) * 2.0;
+    const vz = (Math.random() - 0.5) * 2.0;
+    const vy = Math.random() * 1.5 + 0.5;
+    api?.velocity?.set?.(vx, vy, vz);
+    const avx = (Math.random() - 0.5) * 3.0;
+    const avy = (Math.random() - 0.5) * 3.0;
+    const avz = (Math.random() - 0.5) * 3.0;
+    api?.angularVelocity?.set?.(avx, avy, avz);
+  }, [api]);
 
   // Cleanup after 10 seconds or if ball falls off
   useFrame(() => {
@@ -180,13 +204,16 @@ const World = ({ balls, onBallCollision, energyLevel, cps, bloomIntensity }) => 
 
   return (
     <>
-      <Physics gravity={[0, -9.8, 0]}>
+      <Physics gravity={[0, -9.8, 0]} defaultContactMaterial={{ friction: 0.02, restitution: 0.8 }}>
         <PhysicsFloor />
         {renderBalls.map((ball) => {
           const hasPos = Array.isArray(ball.position);
           const nx = ball.nx ?? ball.x;
           const ny = ball.ny ?? ball.y;
           const pos = hasPos ? ball.position : screenToFloorSpawn(nx ?? 0.5, ny ?? 0.5);
+          // Tiny jitter to avoid exact overlap when multiple clicks occur on the same spot
+          pos[0] += (Math.random() - 0.5) * 0.2;
+          pos[2] += (Math.random() - 0.5) * 0.2;
           return (
             <PhysicsBall
               key={ball.id}

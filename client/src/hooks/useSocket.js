@@ -31,6 +31,7 @@ export const useSocket = (initialRoom = 'lobby') => {
   const [room, setRoom] = useState(initialRoom);
   const [users, setUsers] = useState([]); // roster for current room
   const [userName, setUserName] = useState('');
+  const [contest, setContest] = useState({ active: false, remaining: 0, leaderboard: [] });
 
   useEffect(() => {
     // Initialize Socket.io client
@@ -76,6 +77,21 @@ export const useSocket = (initialRoom = 'lobby') => {
     };
     socket.on('room-users', handleRoomUsers);
 
+    // Contest events
+    socket.on('contest-start', ({ duration, endTime }) => {
+      const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+      setContest({ active: true, remaining, leaderboard: [] });
+    });
+    socket.on('contest-update', ({ remaining, leaderboard }) => {
+      setContest({ active: true, remaining, leaderboard });
+    });
+    socket.on('contest-end', ({ winner, leaderboard }) => {
+      setContest({ active: false, remaining: 0, leaderboard });
+    });
+    socket.on('contest-none', () => {
+      setContest({ active: false, remaining: 0, leaderboard: [] });
+    });
+
     // Cleanup on unmount
     return () => {
       if (socket) {
@@ -101,6 +117,12 @@ export const useSocket = (initialRoom = 'lobby') => {
     }
   }, []);
 
+  const startContest = useCallback((duration = 30) => {
+    if (socketRef.current) {
+      socketRef.current.emit('start-contest', { duration });
+    }
+  }, []);
+
   return {
     socket: socketState,
     isConnected,
@@ -108,6 +130,8 @@ export const useSocket = (initialRoom = 'lobby') => {
     joinRoom,
     users,
     userName,
-    setName
+    setName,
+    contest,
+    startContest
   };
 };

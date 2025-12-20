@@ -16,7 +16,8 @@ describe('ControlsPanel', () => {
       />
     );
 
-    const select = screen.getByDisplayValue('Neon');
+  // Selected option text includes emoji and descriptor
+  const select = screen.getByDisplayValue('🌟 Neon - Pentatonic (Bright)');
     fireEvent.change(select, { target: { value: 'ocean' } });
     expect(setPalette).toHaveBeenCalledWith('ocean');
 

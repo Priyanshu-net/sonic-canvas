@@ -1,7 +1,7 @@
 // File: HUD.jsx
 import React from 'react';
 
-export const HUD = ({ isAudioReady, isConnected, energyLevel, cps, combo, getComboMultiplier, userCount, mobile = false }) => {
+export const HUD = ({ isAudioReady, isConnected, energyLevel, cps, combo, getComboMultiplier, userCount, contest, mobile = false }) => {
   return (
     <>
       {/* User Count Indicator - Bottom Right */}
@@ -60,6 +60,37 @@ export const HUD = ({ isAudioReady, isConnected, energyLevel, cps, combo, getCom
               🔥 Combo: {combo}x {getComboMultiplier()}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Contest Bar - Top Center */}
+      {contest?.active && (
+        <div style={{
+          position: 'absolute',
+          top: '2rem',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backdropFilter: 'blur(16px)',
+          background: 'rgba(255, 255, 255, 0.1)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          borderRadius: '0.5rem',
+          padding: mobile ? '0.5rem 0.75rem' : '0.75rem 1rem',
+          zIndex: 11,
+          minWidth: mobile ? '240px' : '320px',
+          color: '#fff'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <div style={{ fontSize: mobile ? '0.8rem' : '0.875rem', fontWeight: 600 }}>🎮 Contest</div>
+            <div style={{ fontSize: mobile ? '0.8rem' : '0.875rem' }}>⏱ {contest.remaining}s</div>
+          </div>
+          <div style={{ marginTop: '0.5rem' }}>
+            {(contest.leaderboard || []).slice(0, 3).map((p, idx) => (
+              <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: mobile ? '0.75rem' : '0.8rem' }}>
+                <span>#{idx + 1} {p.name}</span>
+                <span>{p.beats} beats • peak {p.peakCps} CPS</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </>
