@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 export const MobileToolbar = ({
   isAudioReady,
@@ -13,7 +13,6 @@ export const MobileToolbar = ({
   startContest,
   userName,
   setName,
-  // Optional mobile-only utilities
   room,
   joinRoom,
   messages,
@@ -21,177 +20,232 @@ export const MobileToolbar = ({
   bloomIntensity,
   setBloomIntensity,
 }) => {
-  const [nameEditing, setNameEditing] = useState(false);
-  const [nameInput, setNameInput] = useState(userName || '');
-  const [roomInput, setRoomInput] = useState(room || '');
-  const [chatInput, setChatInput] = useState('');
-  // Only one popup visible at a time: 'room' | 'chat' | 'glow' | null
-  const [activePopup, setActivePopup] = useState(null);
-  const togglePopup = (name) => setActivePopup((prev) => (prev === name ? null : name));
+  const [activePopup, setActivePopup] = useState(null); // 'chat' | 'room' | 'settings' | null
+  const [localInput, setLocalInput] = useState('');
+  const [localName, setLocalName] = useState(userName || '');
+  const chatEndRef = useRef(null);
 
-  const barStyle = {
-    position: 'fixed',
-    bottom: 10,
-    right: 10,
-    left: 'auto',
-    zIndex: 1100,
-    padding: '10px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '10px',
-    alignItems: 'flex-end',
-    background: 'var(--color-bg-glass)',
-    backdropFilter: 'blur(8px)',
-    border: '1px solid var(--color-border)',
-    borderRadius: '12px'
+  // Sync props to local state
+  useEffect(() => { setLocalName(userName || ''); }, [userName]);
+
+  // Auto-scroll chat
+  useEffect(() => {
+    if (activePopup === 'chat' && chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, activePopup]);
+
+  const togglePopup = (view) => {
+    setActivePopup(prev => prev === view ? null : view);
   };
 
-  const buttonStyle = {
+  const closePopup = () => setActivePopup(null);
+
+  // --- Styles ---
+  const toolbarStyle = {
+    position: 'fixed',
+    bottom: '20px',
+    right: '16px',
+    zIndex: 1100,
     display: 'flex',
     flexDirection: 'column',
+    gap: '12px',
+    alignItems: 'flex-end',
+  };
+
+  const fabStyle = {
+    width: '48px',
+    height: '48px',
+    borderRadius: '50%',
+    display: 'flex',
     alignItems: 'center',
-    gap: 4,
-    color: 'var(--color-text)',
-    fontSize: '0.75rem',
+    justifyContent: 'center',
+    fontSize: '1.25rem',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+    padding: 0,
+  };
+
+  // Bottom Sheet (Drawer) Style
+  const drawerStyle = {
+    position: 'fixed',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: activePopup === 'chat' ? '50vh' : 'auto', // Taller for chat
+    maxHeight: '70vh',
+    zIndex: 1200,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    borderTop: '1px solid var(--color-border)',
+    display: 'flex',
+    flexDirection: 'column',
+    animation: 'slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+    paddingBottom: 'safe-area-inset-bottom', // For iPhone Home bar
   };
 
   return (
-    <div style={barStyle}>
-      {!isAudioReady ? (
-  <button className="glass-button-hero" onClick={startAudio} style={{ width: '100%' }}>🎧 Initialize</button>
-      ) : (
+    <>
+      {/* 1. The Floating Action Toolbar (Right Side) */}
+      <div style={toolbarStyle}>
+        {!isAudioReady ? (
+          <button 
+            className="glass-button-hero" 
+            onClick={startAudio} 
+            aria-label="Initialize"
+            style={{ padding: '0.8rem 1.5rem', fontSize: '1rem', whiteSpace: 'nowrap' }}
+          >
+            🎧 Start
+          </button>
+        ) : (
+          <>
+            <button className="glass-button" style={fabStyle} onClick={() => togglePopup('settings')} aria-label="Settings">
+              ⚙️
+            </button>
+            <button className="glass-button" style={fabStyle} onClick={() => togglePopup('room')} aria-label="Edit Name">
+              🏷️
+            </button>
+            <button className="glass-button-primary" style={fabStyle} onClick={() => togglePopup('chat')} aria-label="Chat">
+              💬
+            </button>
+            <button className="glass-button" style={fabStyle} onClick={toggleTheme} aria-label="Toggle Theme">
+              🌗
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* 2. The Bottom Sheet / Drawer Overlay */}
+      {activePopup && (
         <>
-          <button className="glass-button" onClick={toggleTheme} style={buttonStyle} aria-label="Toggle Theme">
-            <span>{theme === 'dark' ? '☀️' : '🌙'}</span>
-            <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
-          </button>
-
-          <button className="glass-button" onClick={() => setGraphicsEnabled(!graphicsEnabled)} style={buttonStyle} aria-label="Toggle Graphics">
-            <span>✨</span>
-            <span>{graphicsEnabled ? 'Graphics' : 'Basic'}</span>
-          </button>
-            {/* Glow (Bloom) intensity control */}
-            {typeof bloomIntensity === 'number' && typeof setBloomIntensity === 'function' && (
-              <button className="glass-button" onClick={() => togglePopup('glow')} style={buttonStyle} aria-label="Glow">
-                <span>🌟</span>
-                <span>Glow</span>
+          {/* Click backdrop to close */}
+          <div 
+            style={{ position: 'fixed', inset: 0, zIndex: 1150, background: 'rgba(0,0,0,0.2)' }} 
+            onClick={closePopup}
+          />
+          
+          <div className="glass-panel" style={drawerStyle}>
+            {/* Drawer Header */}
+            <div style={{ 
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
+              padding: '12px 16px', borderBottom: '1px solid var(--color-border)',
+              background: 'rgba(0,0,0,0.1)' 
+            }}>
+              <span style={{ fontWeight: 700, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                {activePopup === 'chat' && 'Live Chat'}
+                {activePopup === 'room' && 'Room & Identity'}
+                {activePopup === 'settings' && 'Controls'}
+              </span>
+              <button 
+                onClick={closePopup} 
+                style={{ background: 'transparent', border: 'none', color: 'var(--color-text)', fontSize: '1.2rem', padding: '4px' }}
+              >
+                ✕
               </button>
-            )}
-
-            {/* Chat toggle */}
-            {Array.isArray(messages) && typeof sendMessage === 'function' && (
-              <button className="glass-button" onClick={() => togglePopup('chat')} style={buttonStyle} aria-label="Chat">
-                <span>💬</span>
-                <span>Chat</span>
-              </button>
-            )}
-
-            {/* Room quick edit */}
-            {typeof joinRoom === 'function' && (
-              <button className="glass-button" onClick={() => togglePopup('room')} style={buttonStyle} aria-label="Room">
-                <span>🏟️</span>
-                <span>{room || 'Room'}</span>
-              </button>
-            )}
-
-
-          <button className="glass-button" onClick={() => setHapticsEnabled(!hapticsEnabled)} style={buttonStyle} aria-label="Toggle Haptics">
-            <span>📳</span>
-            <span>{hapticsEnabled ? 'Haptics' : 'Off'}</span>
-          </button>
-
-          <button className="glass-button" onClick={() => startContest?.(30)} style={buttonStyle} aria-label="Start Contest">
-            <span>🏁</span>
-            <span>Contest</span>
-          </button>
-
-          <div style={{ ...buttonStyle }}>
-            {!nameEditing ? (
-              <button className="glass-button" onClick={() => setNameEditing(true)} aria-label="Edit Name">
-                <span>👤</span>
-                <span>{userName?.trim() || 'Set Name'}</span>
-              </button>
-            ) : (
-              <div style={{ display: 'flex', gap: 6 }}>
-                <input
-                  value={nameInput}
-                  onChange={(e) => setNameInput(e.target.value)}
-                  placeholder="Your name"
-                  className="glass-input"
-                  style={{ width: 120 }}
-                />
-                <button className="glass-button-primary" onClick={() => { setName?.(nameInput); setNameEditing(false); }}>Save</button>
-              </div>
-            )}
-          </div>
-
-          {/* Overlays */}
-          {activePopup === 'room' && (
-            <div style={{ position: 'fixed', bottom: 70, left: 10, right: 10, zIndex: 1200, padding: 12, borderRadius: 10, background: 'var(--color-bg-glass)', backdropFilter: 'blur(10px)', border: '1px solid var(--color-border)' }}>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <input
-                  value={roomInput}
-                  onChange={(e) => setRoomInput(e.target.value)}
-                  placeholder="Room Name"
-                  className="glass-input"
-                  style={{ flex: 1 }}
-                />
-                <button className="glass-button" onClick={() => { joinRoom?.(roomInput); setActivePopup(null); }}>Join</button>
-              </div>
             </div>
-          )}
 
-          {activePopup === 'glow' && (
-            <div style={{ position: 'fixed', bottom: 70, left: 10, right: 10, zIndex: 1200, padding: 12, borderRadius: 10, background: 'var(--color-bg-glass)', backdropFilter: 'blur(10px)', border: '1px solid var(--color-border)' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <label className="label-text">Glow Intensity</label>
-                <input
-                  type="range"
-                  min={0}
-                  max={4}
-                  step={0.1}
-                  value={bloomIntensity}
-                  onChange={(e) => setBloomIntensity?.(parseFloat(e.target.value))}
-                />
-                <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>Current: {bloomIntensity?.toFixed?.(1) ?? bloomIntensity}</div>
-              </div>
-            </div>
-          )}
-
-          {activePopup === 'chat' && (
-            <div style={{ position: 'fixed', bottom: 70, left: 10, right: 10, zIndex: 1200, padding: 12, borderRadius: 10, background: 'var(--color-bg-glass)', backdropFilter: 'blur(10px)', border: '1px solid var(--color-border)' }}>
-              <div className="custom-scrollbar" style={{ maxHeight: 150, overflowY: 'auto', marginBottom: 8 }}>
-                {(messages || []).slice(-20).map((m, idx) => (
-                  <div key={idx} style={{ fontSize: '0.8rem', marginBottom: 4 }}>
-                    <strong style={{ opacity: 0.8 }}>{m.userName || 'Anon'}:</strong> <span>{m.text || m.message || ''}</span>
+            {/* Drawer Content */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }} className="custom-scrollbar">
+              
+              {/* --- CHAT VIEW --- */}
+              {activePopup === 'chat' && (
+                <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                  <div style={{ flex: 1, overflowY: 'auto', marginBottom: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {(messages || []).length === 0 && <div style={{ opacity: 0.5, textAlign: 'center', marginTop: '20px' }}>No messages yet.</div>}
+                    {messages.map((m, i) => (
+                      <div key={i} style={{ fontSize: '0.9rem', background: 'var(--color-bg-inset)', padding: '8px 12px', borderRadius: '8px' }}>
+                        <span style={{ color: 'var(--color-primary)', fontWeight: 600, marginRight: '6px' }}>{m.from}:</span>
+                        <span style={{color: 'var(--color-text)'}}>{m.text}</span>
+                      </div>
+                    ))}
+                    <div ref={chatEndRef} />
                   </div>
-                ))}
-                {(messages?.length ?? 0) === 0 && (
-                  <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>No messages yet</div>
-                )}
-              </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Message..."
-                  className="glass-input"
-                  style={{ flex: 1 }}
-                />
-                <button
-                  className="glass-button"
-                  onClick={() => {
-                    const text = (chatInput || '').trim();
-                    if (!text) return;
-                    sendMessage?.(text);
-                    setChatInput('');
-                  }}
-                >Send</button>
-              </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input
+                      className="glass-input"
+                      value={localInput}
+                      onChange={(e) => setLocalInput(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { sendMessage?.(localInput); setLocalInput(''); } }}
+                      placeholder="Type a message..."
+                      style={{ fontSize: '1rem', padding: '10px' }}
+                      autoFocus
+                    />
+                    <button 
+                      className="glass-button-primary" 
+                      onClick={() => { sendMessage?.(localInput); setLocalInput(''); }}
+                      style={{ padding: '0 20px' }}
+                    >
+                      ➤
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* --- ROOM VIEW --- */}
+              {activePopup === 'room' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div>
+                    <label className="label-text">Your Name</label>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input 
+                        className="glass-input" 
+                        value={localName} 
+                        onChange={(e) => setLocalName(e.target.value)} 
+                        placeholder="Your name"
+                      />
+                      <button className="glass-button" onClick={() => setName?.(localName)}>Save</button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="label-text">Current Room</label>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input 
+                        className="glass-input" 
+                        defaultValue={room} 
+                        onBlur={(e) => joinRoom?.(e.target.value)}
+                        placeholder="Lobby"
+                      />
+                      <button className="glass-button" onClick={() => {}}>Join</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* --- SETTINGS VIEW --- */}
+              {activePopup === 'settings' && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <button className="glass-button" onClick={toggleTheme} aria-label="Toggle Theme" style={{ justifyContent: 'center', height: '60px', flexDirection: 'column', gap: '4px' }}>
+                    <span style={{fontSize: '1.2rem'}}>{theme === 'dark' ? '☀️' : '🌙'}</span>
+                    <span>Theme</span>
+                  </button>
+                  <button className="glass-button" onClick={() => setGraphicsEnabled(!graphicsEnabled)} style={{ justifyContent: 'center', height: '60px', flexDirection: 'column', gap: '4px' }}>
+                    <span style={{fontSize: '1.2rem'}}>✨</span>
+                    <span>{graphicsEnabled ? '3D On' : '3D Off'}</span>
+                  </button>
+                  <button className="glass-button" onClick={() => setHapticsEnabled(!hapticsEnabled)} style={{ justifyContent: 'center', height: '60px', flexDirection: 'column', gap: '4px' }}>
+                    <span style={{fontSize: '1.2rem'}}>📳</span>
+                    <span>{hapticsEnabled ? 'Haptics' : 'Silent'}</span>
+                  </button>
+                  <button className="glass-button" onClick={() => startContest?.(30)} style={{ justifyContent: 'center', height: '60px', flexDirection: 'column', gap: '4px', border: '1px solid var(--color-primary)' }}>
+                    <span style={{fontSize: '1.2rem'}}>🏁</span>
+                    <span>Contest</span>
+                  </button>
+                  
+                  <div style={{ gridColumn: '1 / -1', marginTop: '12px' }}>
+                    <label className="label-text">Glow Intensity</label>
+                    <input 
+                      type="range" min="0" max="3" step="0.1" 
+                      value={bloomIntensity} 
+                      onChange={(e) => setBloomIntensity?.(parseFloat(e.target.value))}
+                      style={{ width: '100%', accentColor: 'var(--color-primary)' }}
+                    />
+                  </div>
+                </div>
+              )}
+
             </div>
-          )}
+          </div>
         </>
       )}
-    </div>
+    </>
   );
 };
