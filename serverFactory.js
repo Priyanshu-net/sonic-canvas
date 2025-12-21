@@ -21,6 +21,11 @@ export function createSonicCanvasServer({ port = 3001, corsOrigin = 'http://loca
     res.json({ status: 'Sonic Canvas Server Running' });
   });
 
+  // Health endpoint for load balancers / monitoring
+  app.get('/health', (req, res) => {
+    res.status(200).send('ok');
+  });
+
   // Track which room a socket is in and user info (single room per socket)
   const socketRoom = new Map(); // socket.id -> roomName
   const users = new Map(); // socket.id -> { name: string, beats: number, lastAction: number }
