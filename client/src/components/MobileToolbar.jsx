@@ -98,16 +98,16 @@ export const MobileToolbar = ({
           </button>
         ) : (
           <>
-            <button className="glass-button" style={fabStyle} onClick={() => togglePopup('settings')} aria-label="Settings">
+            <button data-tutorial-id="mtb-settings" className="glass-button" style={fabStyle} onClick={() => togglePopup('settings')} aria-label="Settings">
               ⚙️
             </button>
-            <button className="glass-button" style={fabStyle} onClick={() => togglePopup('room')} aria-label="Edit Name">
+            <button data-tutorial-id="mtb-room" className="glass-button" style={fabStyle} onClick={() => togglePopup('room')} aria-label="Edit Name">
               🏷️
             </button>
-            <button className="glass-button-primary" style={fabStyle} onClick={() => togglePopup('chat')} aria-label="Chat">
+            <button data-tutorial-id="mtb-chat" className="glass-button-primary" style={fabStyle} onClick={() => togglePopup('chat')} aria-label="Chat">
               💬
             </button>
-            <button className="glass-button" style={fabStyle} onClick={toggleTheme} aria-label="Toggle Theme">
+            <button data-tutorial-id="controls-theme" className="glass-button" style={fabStyle} onClick={toggleTheme} aria-label="Toggle Theme">
               🌗
             </button>
           </>
@@ -170,6 +170,7 @@ export const MobileToolbar = ({
                       autoFocus
                     />
                     <button 
+                      data-tutorial-id="chat-send"
                       className="glass-button-primary" 
                       onClick={() => { sendMessage?.(localInput); setLocalInput(''); }}
                       style={{ padding: '0 20px' }}
@@ -213,7 +214,7 @@ export const MobileToolbar = ({
               {/* --- SETTINGS VIEW --- */}
               {activePopup === 'settings' && (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <button className="glass-button" onClick={toggleTheme} aria-label="Toggle Theme" style={{ justifyContent: 'center', height: '60px', flexDirection: 'column', gap: '4px' }}>
+                  <button data-tutorial-id="controls-theme" className="glass-button" onClick={toggleTheme} aria-label="Toggle Theme" style={{ justifyContent: 'center', height: '60px', flexDirection: 'column', gap: '4px' }}>
                     <span style={{fontSize: '1.2rem'}}>{theme === 'dark' ? '☀️' : '🌙'}</span>
                     <span>Theme</span>
                   </button>
@@ -225,7 +226,7 @@ export const MobileToolbar = ({
                     <span style={{fontSize: '1.2rem'}}>📳</span>
                     <span>{hapticsEnabled ? 'Haptics' : 'Silent'}</span>
                   </button>
-                  <button className="glass-button" onClick={() => startContest?.(30)} style={{ justifyContent: 'center', height: '60px', flexDirection: 'column', gap: '4px', border: '1px solid var(--color-primary)' }}>
+                  <button data-tutorial-id="contest-start" className="glass-button" onClick={() => startContest?.(30)} style={{ justifyContent: 'center', height: '60px', flexDirection: 'column', gap: '4px', border: '1px solid var(--color-primary)' }}>
                     <span style={{fontSize: '1.2rem'}}>🏁</span>
                     <span>Contest</span>
                   </button>

@@ -6,12 +6,12 @@ export const ControlsPanel = ({ theme, toggleTheme, currentPalette, setCurrentPa
     <Panel title="System Controls" initialX={initialX} initialY={initialY}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <span style={{ fontSize: '0.8rem' }}>Interface Theme</span>
-        <button onClick={toggleTheme} className="glass-button">{theme === 'dark' ? '☀️ Light' : '🌙 Dark'}</button>
+        <button data-tutorial-id="controls-theme" onClick={toggleTheme} className="glass-button">{theme === 'dark' ? '☀️ Light' : '🌙 Dark'}</button>
       </div>
 
       <div style={{ marginBottom: '16px' }}>
         <label className="label-text">AUDIO PALETTE</label>
-        <select value={currentPalette} onChange={(e) => setCurrentPalette(e.target.value)} className="glass-select">
+        <select data-tutorial-id="controls-palette" value={currentPalette} onChange={(e) => setCurrentPalette(e.target.value)} className="glass-select">
           <option value="neon">Neon Pentatonic</option>
           <option value="sunset">Sunset Major</option>
           <option value="ocean">Ocean Minor</option>
@@ -38,7 +38,7 @@ export const ControlsPanel = ({ theme, toggleTheme, currentPalette, setCurrentPa
       <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid var(--color-border)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
           <span className="label-text">SESSION MODES</span>
-          <button className="glass-button" onClick={() => startContest?.(30)}>Start Contest (30s)</button>
+          <button data-tutorial-id="contest-start" className="glass-button" onClick={() => startContest?.(30)}>Start Contest (30s)</button>
         </div>
         {contest?.active ? (
           <div style={{ fontSize: '0.8rem' }}>🏁 Contest running • {contest.remaining}s left</div>

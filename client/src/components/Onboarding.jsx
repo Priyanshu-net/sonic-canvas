@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const Onboarding = ({ onClose }) => {
+export const Onboarding = ({ onClose, onStartTutorial }) => {
   return (
     <div style={{ position: 'absolute', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div className="glass-panel" style={{ width: 'min(600px, 90vw)', padding: '30px' }}>
@@ -29,8 +29,10 @@ export const Onboarding = ({ onClose }) => {
             </div>
           </div>
         </div>
-
-        <button onClick={onClose} className="glass-button-hero" style={{ width: '100%' }}>START JAMMING</button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button onClick={onStartTutorial} className="glass-button-primary" style={{ flex: 1 }}>Start Tutorial</button>
+          <button onClick={onClose} className="glass-button" style={{ flex: 1 }}>Skip</button>
+        </div>
       </div>
     </div>
   );

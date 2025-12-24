@@ -11,6 +11,8 @@ import { ChatPanel } from './components/ChatPanel';
 import { RoomPanel } from './components/RoomPanel';
 import { Onboarding } from './components/Onboarding';
 import { MobileToolbar } from './components/MobileToolbar';
+import { useTutorial, DEFAULT_STEPS } from './hooks/useTutorial';
+import { TutorialCoachmark } from './components/TutorialCoachmark';
 
 const COLOR_PALETTES = {
   neon: ['#00FFFF', '#FF00FF', '#00FF00', '#FFD700', '#FF1493'],
@@ -34,6 +36,9 @@ function App({ PhysicsSceneComponent = PhysicsSceneLazy }) {
   const [reverbWet, setReverbWetUI] = useState(0.4);
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(true);
+
+  // Tutorial: initialize with socket analytics and default steps
+  const tutorial = useTutorial({ socket, steps: DEFAULT_STEPS, defaultVariant: 'checkpoint' });
 
   // Robust mobile detection: coarse pointer OR mobile UA OR touch capability
   const isMobile = (() => {
@@ -61,6 +66,11 @@ function App({ PhysicsSceneComponent = PhysicsSceneLazy }) {
     if (updateFilter && isAudioReady) updateFilter(energyLevel);
     setReverbWet(reverbWet);
   }, [currentPalette, energyLevel, isAudioReady, reverbWet]);
+
+  // Mark palette change for tutorial once
+  useEffect(() => {
+    tutorial?.complete?.('palette-change');
+  }, [currentPalette]);
 
   useEffect(() => {
     if (!socket) return;
@@ -100,7 +110,19 @@ function App({ PhysicsSceneComponent = PhysicsSceneLazy }) {
     socket.emit('trigger-beat', { id: beatId, x, y, color, note });
     setClicks(prev => [...prev, { x: e.clientX, y: e.clientY, color, id: beatId }]);
     setTimeout(() => setClicks(prev => prev.filter(c => c.id !== beatId)), 1000);
+    // Tutorial: first beat completed
+    tutorial?.complete?.('first-beat');
   };
+
+  // Wrapped actions to mark tutorial steps
+  const toggleThemeWithTutorial = () => {
+    tutorial?.complete?.('theme-toggle');
+    setTheme(t => (t === 'dark' ? 'light' : 'dark'));
+  };
+  const setNameWithTutorial = (n) => { setName(n); if ((n || '').trim()) tutorial?.complete?.('set-name'); };
+  const joinRoomWithTutorial = (r) => { joinRoom(r); if ((r || '').trim()) tutorial?.complete?.('join-room'); };
+  const sendMessageWithTutorial = (txt) => { sendMessage(txt); if ((txt || '').trim()) tutorial?.complete?.('chat-send'); };
+  const startContestWithTutorial = (d) => { startContest?.(d); tutorial?.complete?.('contest'); };
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden' }}>
@@ -142,8 +164,8 @@ function App({ PhysicsSceneComponent = PhysicsSceneLazy }) {
             reverbWet={reverbWet} setReverbWet={setReverbWetUI}
             hapticsEnabled={hapticsEnabled} setHapticsEnabled={setHapticsEnabled}
             graphicsEnabled={graphicsEnabled} setGraphicsEnabled={setGraphicsEnabled}
-            theme={theme} toggleTheme={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
-            contest={contest} startContest={startContest}
+            theme={theme} toggleTheme={toggleThemeWithTutorial}
+            contest={contest} startContest={startContestWithTutorial}
             initialX={window.innerWidth - 330 - sideMargin} initialY={topAnchor}
           />
           <UsersPanel users={users} room={room} />
@@ -155,19 +177,19 @@ function App({ PhysicsSceneComponent = PhysicsSceneLazy }) {
           isAudioReady={isAudioReady}
           startAudio={startAudio}
           theme={theme}
-          toggleTheme={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+          toggleTheme={toggleThemeWithTutorial}
           graphicsEnabled={graphicsEnabled}
           setGraphicsEnabled={setGraphicsEnabled}
           hapticsEnabled={hapticsEnabled}
           setHapticsEnabled={setHapticsEnabled}
           contest={contest}
-          startContest={startContest}
+          startContest={startContestWithTutorial}
           userName={userName}
-          setName={setName}
+          setName={setNameWithTutorial}
           room={room}
-          joinRoom={joinRoom}
+          joinRoom={joinRoomWithTutorial}
           messages={messages}
-          sendMessage={sendMessage}
+          sendMessage={sendMessageWithTutorial}
           bloomIntensity={bloomIntensity}
           setBloomIntensity={setBloomIntensity}
         />
@@ -177,14 +199,17 @@ function App({ PhysicsSceneComponent = PhysicsSceneLazy }) {
         <div style={{ position: 'absolute', inset: 0, zIndex: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-bg)', pointerEvents: 'none' }}>
           <div style={{ textAlign: 'center' }}>
             <h1 style={{ fontSize: '3.5rem', fontWeight: 100, letterSpacing: '0.5em', marginBottom: '3rem' }}>SONIC CANVAS</h1>
-            <button onClick={startAudio} className="glass-button-hero" style={{ pointerEvents: 'auto' }}>INITIALIZE STUDIO</button>
+            <button id="initialize-audio" onClick={() => { startAudio(); tutorial?.complete?.('audio-init'); }} className="glass-button-hero" style={{ pointerEvents: 'auto' }}>INITIALIZE STUDIO</button>
           </div>
         </div>
       )}
 
-      {showOnboarding && <Onboarding onClose={() => setShowOnboarding(false)} />}
+  {showOnboarding && <Onboarding onStartTutorial={() => { tutorial.start('checkpoint'); setShowOnboarding(false); }} onClose={() => setShowOnboarding(false)} />}
 
-      <div data-testid="click-layer" onClick={handleCanvasClick} style={{ position: 'absolute', inset: 0, zIndex: 5, cursor: 'crosshair' }}>
+  {/* Coachmark overlay (suppressed while onboarding is visible) */}
+  {!showOnboarding && <TutorialCoachmark tutorial={tutorial} isAudioReady={isAudioReady} />}
+
+      <div data-testid="click-layer" data-tutorial-id="canvas" onClick={handleCanvasClick} style={{ position: 'absolute', inset: 0, zIndex: 5, cursor: 'crosshair' }}>
         {clicks.map(click => (
           <div key={click.id} className="pulse-animate" style={{ position: 'absolute', left: click.x, top: click.y, width: '40px', height: '40px', borderRadius: '50%', background: `radial-gradient(circle, ${click.color} 0%, transparent 70%)` }} />
         ))}

@@ -48,7 +48,7 @@ export const ChatPanel = ({ messages = [], sendMessage, initialX, initialY }) =>
           className="glass-input"
           style={{ flex: 1 }}
         />
-        <button onClick={handleSend} className="glass-button">Send</button>
+        <button data-tutorial-id="chat-send" onClick={handleSend} className="glass-button">Send</button>
       </div>
     </Panel>
   );
